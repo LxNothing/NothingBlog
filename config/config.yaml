@@ -1,0 +1,36 @@
+app:
+  name: "NothingBlog"
+  mode: "dev"
+  version: "v_0.0.1"
+  port: 8080
+  machine_id: 1
+  start_time: "2024-11-17"
+  sqlfile: "暂时未使用"
+
+auth:
+  code_num: 1024 # 验证码个数
+  verify_expired: 5 # 验证码的过期时间，单位：分钟
+
+log:
+  level: "debug"
+  file_name: "webapp.log"
+  max_age: 30
+  max_size: 200 # 日志文件的最大大小
+  max_backup: 5
+
+mysql:
+  host: 60.204.185.20
+  port: 3306
+  schema: ngblog
+  username: lx_remote
+  password: "123456"
+  max_idle_conns: 50
+  max_open_conns: 200
+
+redis:
+  host: 60.204.185.20
+  port: 6379
+  username: root
+  password: "123456"
+  db:  0
+  poolsize: 20
