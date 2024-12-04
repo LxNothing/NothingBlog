@@ -30,6 +30,21 @@ func QueryUserByName(user *models.User) (err error) {
 	return ErrUserExisted
 }
 
+// 设置用户的密码
+func SetUserPassword(userName string, newPwd string) error {
+	return Db.Model(&models.User{}).Where("`user_name` = ?", userName).Update("password", newPwd).Error
+}
+
+// 根据用户的名称和邮箱查找用户
+// func QueryUserByNameAndEmail(user *models.User) (err error) {
+// 	// 注 Find不会产生 ErrRecordNotFound
+// 	err = Db.Where("user_name=?", user.UserName).Take(user).Error
+// 	if errors.Is(err, gorm.ErrRecordNotFound) {
+// 		return nil
+// 	}
+// 	return ErrUserExisted
+// }
+
 // 插入用户数据
 func InsertUser(u *models.User) (err error) {
 	return Db.Create(u).Error

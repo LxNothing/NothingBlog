@@ -1,12 +1,10 @@
 package controller
 
 import (
-	"NothingBlog/models"
 	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
 var ErrorUserNotLogin = errors.New("用户未登录")
@@ -44,19 +42,5 @@ func getBlogSizeAndPage(ctx *gin.Context) (page int64, size int64, err error) {
 		size = 10
 	}
 	err = nil
-	return
-}
-
-// 从参数获取要查询的条数和
-func getBlogListParams(ctx *gin.Context) (bol *models.BlogOrderListParams, err error) {
-	bol = &models.BlogOrderListParams{
-		Page:  1,
-		Szie:  10,
-		Order: models.BlogOrderByTime,
-	}
-
-	if err = ctx.ShouldBindQuery(bol); err != nil {
-		zap.L().Warn("ctx.ShouldBindQuery 执行错误", zap.Error(err))
-	}
 	return
 }

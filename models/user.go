@@ -7,7 +7,7 @@ import (
 // 描述用户的数据模型
 type User struct {
 	gorm.Model
-	UserId   int64  `json:"user_id" gorm:"type:bigint(20);unique;not null"`
+	UserId   int64  `json:"user_id" gorm:"type:bigint(20);unique;not null"`   // 用户ID，由应用层雪花算法计算得出
 	UserName string `json:"username" gorm:"type:varchar(30);unique;not null"` // 用户名
 	Email    string `json:"email" gorm:"type:varchar(30)"`                    // 邮箱
 	Password string `json:"password" gorm:"type:varchar(100);not null"`       // 密码

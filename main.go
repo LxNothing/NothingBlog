@@ -17,10 +17,20 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/spf13/viper"
+	docs "NothingBlog/docs"
+
+	"github.com/gin-gonic/gin"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
 )
 
+// 参考博客 ： https://cangmang.xyz
+
+// @title NgBlog
+// @version 1.0
+// @description NgBlog Go博客项目 API 接口文档
+// @host localhost:8080
 func main() {
 	// 1.配置初始化
 	if err := settings.Init(); err != nil {
@@ -68,10 +78,23 @@ func main() {
 	// 初始化文章数据 - 主要是从mysql中读出文章的点赞数，以及点赞的人（对于博客的点赞应该不需要）
 
 	// 5.注册路由
-	r := routers.SetUp(settings.Confg.Mode)
+	r := gin.New()
+	if settings.Confg.Mode == gin.ReleaseMode {
+		gin.SetMode(gin.ReleaseMode) // 将gin设置为发布模式
+	}
+
+	// 设置日志记录中间件
+	r.Use(logger.GinZapLogger(), logger.GinZapRecovery(true))
+	// 这个路由用于配置接口文档的访问路由 - 仅在开发阶段使用
+	docs.SwaggerInfo.BasePath = settings.Confg.AdminBasePath
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	// 配置客户端访问和admin访问的路由
+	routers.ClientSetUp(settings.Confg.ClientBasePath, r)
+	routers.AdminSetUp(settings.Confg.AdminBasePath, r)
+
 	// 6.启动服务：优雅关机与重启
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", viper.GetInt("app.port")),
+		Addr:    fmt.Sprintf(":%s", settings.Confg.AppConfig.Port),
 		Handler: r,
 	}
 

@@ -9,21 +9,28 @@ import (
 
 // 使用结构体来存储配置信息 - 实现配置信息的更清晰的展示
 type PrjConfig struct {
-	*AppConfig   `mapstructure:"app"`
-	*AuthConfig  `mapstructure:"auth"`
-	*LogConfig   `mapstructure:"log"`
-	*MysqlConfig `mapstructure:"mysql"`
-	*RedisConfig `mapstructure:"redis"`
+	*AppConfig    `mapstructure:"app"`
+	*SystemConfig `mapstructure:"system"`
+	*AuthConfig   `mapstructure:"auth"`
+	*LogConfig    `mapstructure:"log"`
+	*MysqlConfig  `mapstructure:"mysql"`
+	*RedisConfig  `mapstructure:"redis"`
 }
 
 type AppConfig struct {
-	Name      string `mapstructure:"name"`
-	Mode      string `mapstructure:"mode"`
-	Version   string `mapstructure:"version"`
-	Port      string `mapstructure:"port"`
-	StartTime string `mapstructure:"start_time"`
-	SqlFile   string `mapstructure:"sqlfile"`
-	MachineId int64  `mapstructure:"machine_id"`
+	Name           string `mapstructure:"name"`
+	Mode           string `mapstructure:"mode"`
+	Version        string `mapstructure:"version"`
+	Port           string `mapstructure:"port"`
+	StartTime      string `mapstructure:"start_time"`
+	SqlFile        string `mapstructure:"sqlfile"`
+	AdminBasePath  string `mapstructure:"admin_base_path"`  // admin管理页访问的路径
+	ClientBasePath string `mapstructure:"client_base_path"` // 客户端访问的基路径
+	MachineId      int64  `mapstructure:"machine_id"`
+}
+
+type SystemConfig struct {
+	PageSize int8 `mapstructure:"page_size"` // 文章页每页默认的显示数量
 }
 
 type AuthConfig struct {

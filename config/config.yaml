@@ -1,11 +1,18 @@
 app:
-  name: "NothingBlog"
-  mode: "dev"
+  name: "NgBlog"
+  mode: "dev" # 可选值：dev release
   version: "v_0.0.1"
   port: 8080
   machine_id: 1
-  start_time: "2024-11-17"
-  sqlfile: "暂时未使用"
+  start_time: "2024-11-17" # 系统的起始时间，用作雪花算法的参考时间
+  sqlfile: "暂时未使用" # 创建sql表的sql语句文件
+  admin_base_path: "/api/v1" # admin访问的界面根路径
+  client_base_patj: "" # 前端访问界面的根路径
+
+# 博客系统的默认设置
+system:
+  page_size: 1 # 每页默认的显示文章条数
+
 
 auth:
   code_num: 1024 # 验证码个数
@@ -13,7 +20,7 @@ auth:
 
 log:
   level: "debug"
-  file_name: "webapp.log"
+  file_name: "ngblog.log"
   max_age: 30
   max_size: 200 # 日志文件的最大大小
   max_backup: 5
@@ -34,3 +41,4 @@ redis:
   password: "123456"
   db:  0
   poolsize: 20
+

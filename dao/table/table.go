@@ -6,5 +6,5 @@ import (
 )
 
 func DbTableInit() error {
-	return mysql.Db.AutoMigrate(&models.User{}, &models.Article{}, &models.AtcTag{})
+	return mysql.Db.AutoMigrate(&models.User{}, &models.Tag{}, &models.Class{}, &models.Article{})
 }

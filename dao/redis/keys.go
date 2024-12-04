@@ -2,10 +2,11 @@ package redis
 
 // 定义redis与文章投票点赞相关的键的常量
 const (
-	KeyPrefix              = "wevision."
+	KeyPrefix              = "ngblog."
 	KeyBlogTimeZset        = "blog.time"   // zset，文章的创建时间
 	KeyBlogScoreZset       = "blog.score"  // zset，文章的投票分数
 	KeyBlogVotedZsetPrefix = "blog.voted." // zset，记录单个文章的点赞用户，这个key不完整，还要拼接对应的文章id
+	KeyVerifyCodeStrPrefix = "auth.uid."   // string, 记录验证码
 )
 
 // 获取带前缀的redis key
