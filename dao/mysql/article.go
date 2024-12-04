@@ -3,6 +3,7 @@ package mysql
 import (
 	"NothingBlog/models"
 	"errors"
+	"fmt"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -20,6 +21,16 @@ var (
 	defaultPageIndex    = 1
 	defaultSizeEachPage = 10
 )
+
+func getVaildPageAndSize(page *int, size *int) {
+	if *page < 1 {
+		*page = defaultPageIndex
+	}
+
+	if *size < 1 {
+		*size = defaultSizeEachPage
+	}
+}
 
 func CreateArticle(a *models.Article, tagList []models.TagFormsParams) error {
 	// 开启事务
@@ -126,13 +137,7 @@ func QueryArticleWithPage(page int, size int, state models.StatusType, privilege
 		"Status", "privilege", "title", "summary", "image", "comment_count", "visit_count"})
 
 	// 按页查找
-	if page < 1 {
-		page = defaultPageIndex
-	}
-
-	if size < 1 {
-		size = defaultSizeEachPage
-	}
+	getVaildPageAndSize(&page, &size)
 
 	var total int64
 	if err := query.Debug().Count(&total).Error; err != nil {
@@ -149,11 +154,91 @@ func QueryArticleWithPage(page int, size int, state models.StatusType, privilege
 }
 
 // QueryArticleByClass 获取指定类别下的文章
-func QueryArticleByClass() ([]models.Article, error) {
-	return nil, nil
+func QueryArticleByClass(classId int64) ([]models.Article, error) {
+	var articles []models.Article
+	if err := Db.Preload("Class").Model(&models.Article{}).Where("class_id = ?", classId).Find(&articles).Error; err != nil {
+		zap.L().Debug("通过class id查询文章出错", zap.Error(err))
+		return nil, ErrQueryArticle
+	}
+
+	return articles, nil
 }
 
-// QueryArticleByClass 获取指定Tag下的文章
-func QueryArticleByTag() ([]models.Article, error) {
-	return nil, nil
+// QueryArticleByClass 获取指定类别下的文章
+func QueryArticleByClassWithPage(classId int64, page int, size int) ([]models.Article, int64, error) {
+	var articles []models.Article
+	query := Db.Preload("Class").Model(&models.Article{}).Where("class_id = ?", classId)
+
+	// 按页查找
+	getVaildPageAndSize(&page, &size)
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		zap.L().Debug("查询文章总数出错", zap.Error(err))
+		return nil, 0, ErrQueryArticle
+	}
+
+	if err := query.Limit(size).Offset(size * (page - 1)).Find(&articles).Error; err != nil {
+		zap.L().Debug("按页查找文章出错", zap.Error(err))
+		return nil, 0, ErrQueryArticle
+	}
+
+	return articles, total, nil
+}
+
+// QueryArticleByTag 获取指定Tag下的文章
+func QueryArticleByTag(tagId int64) ([]models.Article, error) {
+	var articles []models.Article
+
+	err := Db.Raw("select * from articles where 'article_id' in (select article_id from tag_article where tag_id = ?)", tagId).Scan(&articles).Error
+	if err != nil {
+		zap.L().Debug("通过Tag查询文章出错", zap.Error(err))
+		return nil, ErrQueryArticle
+	}
+	return articles, nil
+}
+
+func QueryArticleByTagWithPage(tagId int64, page int, size int) ([]models.Article, int64, error) {
+	var articles []models.Article
+	var total int64
+
+	getVaildPageAndSize(&page, &size)
+
+	// queryStr := "select count(*) from articles where article_id in (select article_id from tag_article where tag_id = ?)"
+
+	if err := Db.Debug().Raw("select count(*) from articles where article_id in (select article_id from tag_article where tag_id = ?)", tagId).Count(&total).Error; err != nil {
+		zap.L().Debug("查询文章总数出错", zap.Error(err))
+		return nil, 0, ErrQueryArticle
+	}
+
+	fmt.Println(total)
+
+	if err := Db.Debug().Raw("select * from articles where article_id in (select article_id from tag_article where tag_id = ?)", tagId).Scan(&articles).Error; err != nil {
+		// if err := Db.Raw(queryStr, tagId).Limit(size).Offset(size * (page - 1)).Find(&articles).Error; err != nil {
+		zap.L().Debug("通过Tag按页查找文章出错", zap.Error(err))
+		return nil, 0, ErrQueryArticle
+	}
+
+	return articles, total, nil
+}
+
+func QueryArticleByClassAndTagWithPage(clsId int64, tagId int64, page int, size int) ([]models.Article, int64, error) {
+	var articles []models.Article
+	var total int64
+
+	getVaildPageAndSize(&page, &size)
+
+	queryStr := "select * from articles where class_id = ? and article_id in (select article_id from tag_article where tag_id = ?)"
+
+	if err := Db.Raw("select count(*) from articles where class_id = ? and article_id in (select article_id from tag_article where tag_id = ?)", clsId, tagId).Count(&total).Error; err != nil {
+		zap.L().Debug("查询文章总数出错", zap.Error(err))
+		return nil, 0, ErrQueryArticle
+	}
+	fmt.Println(page, size)
+	if err := Db.Raw(queryStr, clsId, tagId).Limit(size).Offset(size * (page - 1)).Scan(&articles).Error; err != nil {
+		zap.L().Debug("通过Tag和class按页查找文章出错", zap.Error(err))
+		return nil, 0, ErrQueryArticle
+	}
+
+	return articles, total, nil
 }

@@ -18,10 +18,14 @@ type Tag struct {
 
 // 返回的 tag 简略信息
 type TagBriefReturn struct {
-	TagId        int64     `json:"tag_id"`        // tag id 由应用层生成
-	Name         string    `json:"name"`          // 标签名称
-	Desc         string    `json:"desc"`          // 标签的描述信息
-	ArticleCount uint32    `json:"article_count"` // 该标签下拥有的文章数量
-	CreatedAt    time.Time `json:"create_at"`     // 该tag的创建时间
-	UpdatedAt    time.Time `json:"update_at"`     // 该tag的修改时间
+	TagId        int64  `json:"tag_id"`        // tag id 由应用层生成
+	Name         string `json:"name"`          // 标签名称
+	ArticleCount uint32 `json:"article_count"` // 该标签下拥有的文章数量
+}
+
+type TagEntireReturn struct {
+	TagBriefReturn
+	Desc      string    `json:"desc"`      // 标签的描述信息
+	CreatedAt time.Time `json:"create_at"` // 该tag的创建时间
+	UpdatedAt time.Time `json:"update_at"` // 该tag的修改时间
 }

@@ -29,6 +29,10 @@ func CreateTagHandler(ctx *gin.Context) {
 }
 
 func GetAllTagsHandler(ctx *gin.Context) {
-
-	ResponseSuccess(ctx, nil)
+	tag, err := logic.GetAllTags()
+	if err != nil {
+		zap.L().Debug("查询文章种类失败", zap.Error(err))
+		ResponseError(ctx, CodeServerBusy)
+	}
+	ResponseSuccess(ctx, tag)
 }

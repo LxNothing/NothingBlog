@@ -11,6 +11,7 @@ import (
 var (
 	ErrTagInfoNotFound = errors.New("记录不存在")
 	ErrDeleteTagFailed = errors.New("删除Tag失败")
+	ErrTagOtherReason  = errors.New("其他原因的错误")
 )
 
 // 向数据库中插入数据
@@ -19,9 +20,9 @@ func InsertNewTag(tag *models.Tag) error {
 }
 
 // 查询所有的tag，以及所有的信息
-func QueryTagAll() ([]models.Tag, error) {
+func QueryAllTags() ([]models.Tag, error) {
 	var tags []models.Tag
-	if err := Db.Select("tag_id, name, desc, article_count, created_at, updated_at").Take(&tags).Error; err != nil {
+	if err := Db.Preload("ArticleList").Find(&tags).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -43,12 +44,44 @@ func QueryTagByName(tag *models.Tag) (err error) {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return ErrTagInfoNotFound
 	}
+
+	if err != nil {
+		return ErrTagOtherReason
+	}
+
 	return
 }
 
 // 根据ID更新tag信息
 func UpdateTagById(tag *models.Tag) (err error) {
 	return Db.Model(&models.Tag{}).Updates(tag).Error
+}
+
+// 根据种类名称，获取该种类名称下所有的tag信息
+func QuerytTagByClassId(clsId int64) (map[string]models.Tag, error) {
+	var atcs []models.Article
+	err := Db.Debug().Model(&models.Article{}).Preload("TagList").Where("class_id = ?", clsId).Find(&atcs).Error
+	//query := "select atcile_id from aticles where class_name = ?"
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+
+	if err != nil {
+		zap.L().Debug("根据种类查找tag时数据库查询错误")
+		return nil, err
+	}
+
+	tags := make(map[string]models.Tag)
+
+	for _, atc := range atcs {
+		for _, atg := range atc.TagList {
+			if _, ok := tags[atg.Name]; !ok {
+				tags[atg.Name] = atg
+			}
+		}
+	}
+
+	return tags, nil
 }
 
 // // 根据名称更新tag信息

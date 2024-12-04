@@ -11,10 +11,7 @@ import (
 )
 
 var (
-	ErrBlogIdNotExisted = errors.New("文章id不存在")
-	ErrInvalidCommId    = errors.New("社区ID无效")
-	ErrInvalidUserId    = errors.New("用户ID无效")
-	//ErrNoDataSelected   = errors.New("没有文章需要查询")
+	ErrInvalidUserId      = errors.New("用户ID无效")
 	ErrArticleNameExisted = errors.New("文章名称已经存在")
 	ErrArticleNotExisted  = errors.New("查询的文章不存在")
 	ErrArticleQueryFailed = errors.New("查询数据库出错")
@@ -108,38 +105,62 @@ func GetAllArticle() ([]models.Article, error) {
 	return atcs, nil
 }
 
+func GetArticleByClassAndTagWithPage(clsId, tagId int64, page int, size int) ([]models.ArticleBriefReturn, int64, error) {
+	atcs_tmp, total, err := mysql.QueryArticleByClassAndTagWithPage(clsId, tagId, page, size)
+
+	atcs := make([]models.ArticleBriefReturn, 0, len(atcs_tmp))
+
+	for _, atc := range atcs_tmp {
+		atcs = append(atcs, *generateReturnBriefArticle(&atc))
+	}
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return atcs, total, nil
+}
+
+func GetArticleByClassWithPage(classId int64, page int, size int, state models.StatusType, privilege models.PrivilegeType) ([]models.ArticleBriefReturn, int64, error) {
+	atcs_tmp, total, err := mysql.QueryArticleByClassWithPage(classId, page, size)
+	atcs := make([]models.ArticleBriefReturn, 0, len(atcs_tmp))
+
+	for _, atc := range atcs_tmp {
+		atcs = append(atcs, *generateReturnBriefArticle(&atc))
+	}
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return atcs, total, nil
+}
+
+func GetArticleByTagWithPage(tagId int64, page int, size int, state models.StatusType, privilege models.PrivilegeType) ([]models.ArticleBriefReturn, int64, error) {
+	atcs_tmp, total, err := mysql.QueryArticleByTagWithPage(tagId, page, size)
+	atcs := make([]models.ArticleBriefReturn, 0, len(atcs_tmp))
+
+	for _, atc := range atcs_tmp {
+		atcs = append(atcs, *generateReturnBriefArticle(&atc))
+	}
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return atcs, total, nil
+}
+
 func GetArticleWithPage(page int, size int, state models.StatusType, privilege models.PrivilegeType, class int64) ([]models.ArticleBriefReturn, int64, error) {
 	atcs_tmp, total, err := mysql.QueryArticleWithPage(page, size, state, privilege, class)
 	atcs := make([]models.ArticleBriefReturn, 0, len(atcs_tmp))
 
 	for _, atc := range atcs_tmp {
-		/*tmp := models.ArticleBriefReturn{
-			ArticleId:  atc.ArticleId,
-			CreatedAt:  atc.CreatedAt,
-			UpdatedAt:  atc.UpdatedAt,
-			AuthorId:   atc.AuthorId,
-			AuthorName: atc.User.UserName,
-			ClassId:    atc.ClassId,
-			ClassName:  atc.Class.Name,
-			Title:      atc.Title,
-			Privilege:  atc.Privilege,
-			EnComment:  atc.EnComment,
-			TopFlag:    atc.TopFlag,
-			Image:      atc.Image,
-			Summary:    atc.Summary,
-		}
-		tmp.TagId = make([]int64, 0, len(atc.TagList))
-		tmp.TagName = make([]string, 0, len(atc.TagList))
-		for _, tag := range atc.TagList {
-			tmp.TagId = append(tmp.TagId, tag.TagId)
-			tmp.TagName = append(tmp.TagName, tag.Name)
-		}*/
-
 		atcs = append(atcs, *generateReturnBriefArticle(&atc))
 	}
 
 	if err != nil {
-		return nil, 0, nil
+		return nil, 0, err
 	}
 
 	return atcs, total, nil
