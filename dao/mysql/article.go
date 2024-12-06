@@ -165,6 +165,16 @@ func QueryArticleByClass(classId int64) ([]models.Article, error) {
 	return articles, nil
 }
 
+func QueryAticleNumberByClass(classId []int64) (int64, error) {
+	var counter int64
+	if err := Db.Model(&models.Article{}).Where("class_id in (?)", classId).Count(&counter).Error; err != nil {
+		zap.L().Debug("通过class id查询文章出错", zap.Error(err))
+		return -1, ErrQueryArticle
+	}
+
+	return counter, nil
+}
+
 // QueryArticleByClass 获取指定类别下的文章
 func QueryArticleByClassWithPage(classId int64, page int, size int, state models.StatusType, privilege models.PrivilegeType) ([]models.Article, int64, error) {
 	var articles []models.Article
@@ -369,6 +379,7 @@ func DeleteMultiArticleById(ids []int64) error {
 	return tx.Commit().Error
 }
 
+// UpdateArticleVisitCountById 更新文章的访问量
 func UpdateArticleVisitCountById(id int64, newCount uint32) error {
 	return Db.Model(&models.Article{}).Where("id = ?", id).UpdateColumn("visit_count", newCount).Error
 }

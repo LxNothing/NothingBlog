@@ -89,33 +89,33 @@ func QuerytTagByClassId(clsId int64) (map[string]models.Tag, error) {
 
 // }
 
-func DeleteTagById(id int64) (err error) {
-	tx := Db.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
+// func DeleteTagById(id int64) (err error) {
+// 	tx := Db.Begin()
+// 	defer func() {
+// 		if r := recover(); r != nil {
+// 			tx.Rollback()
+// 		}
+// 	}()
 
-	if tx.Error != nil {
-		zap.L().Warn("删除tag时,打开事务出错", zap.Error(tx.Error))
-		return ErrDeleteTagFailed
-	}
+// 	if tx.Error != nil {
+// 		zap.L().Warn("删除tag时,打开事务出错", zap.Error(tx.Error))
+// 		return ErrDeleteTagFailed
+// 	}
 
-	// 删除tag_article表中对应的字段
-	if tx.Exec("delete from `tag_article` where `tag_id` = ?", id).Error != nil {
-		tx.Rollback()
-		return err
-	}
+// 	// 删除tag_article表中对应的字段
+// 	if tx.Exec("delete from `tag_article` where `tag_id` = ?", id).Error != nil {
+// 		tx.Rollback()
+// 		return err
+// 	}
 
-	// 删除tags表中的对应字段
-	if tx.Exec("delete from `tags` where `tag_id` = ?", id).Error != nil {
-		tx.Rollback()
-		return err
-	}
+// 	// 删除tags表中的对应字段
+// 	if tx.Exec("delete from `tags` where `tag_id` = ?", id).Error != nil {
+// 		tx.Rollback()
+// 		return err
+// 	}
 
-	return tx.Commit().Error
-}
+// 	return tx.Commit().Error
+// }
 
 // 删除多个tag，需要指定tag的id
 func DeleteTagByIds(ids []int64) (err error) {

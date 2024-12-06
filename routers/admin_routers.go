@@ -2,7 +2,6 @@ package routers
 
 import (
 	"NothingBlog/controller"
-	"NothingBlog/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,9 +21,6 @@ func AdminSetUp(basePath string, eng *gin.Engine) {
 		// 重置密码
 		authRouter.POST("/auth/password/modify", controller.PwdModifyHandler)
 	}
-
-	// 以下的内容都需要进行jwt认证才可以访问
-	//v1.Use(middleware.JwtAuthorization())
 
 	// 文章路由
 	articleRouter := eng.Group(basePath)
@@ -46,24 +42,35 @@ func AdminSetUp(basePath string, eng *gin.Engine) {
 	// Tag路由
 	tagRouter := eng.Group(basePath)
 	{
-		tagRouter.Use(middleware.JwtAuthorization())
+		//tagRouter.Use(middleware.JwtAuthorization())
 		// 获取所有tag
-		tagRouter.GET("/tag-all", controller.GetAllArticleHandler)
+		tagRouter.GET("/tags", controller.GetAllTagsHandler)
 		// 根据tag id获取tag详细信息
-		tagRouter.GET("/tag/:id", controller.GetArticleWithIdHandler)
+		tagRouter.GET("/tag/:id", controller.GetTagByIdHandler)
 		// 添加新的tag
 		tagRouter.POST("/tag", controller.CreateTagHandler)
+		// 删除单个tag
+		tagRouter.DELETE("/tag/:id", controller.DeleteTagHandler)
+		// 删除多个tag
+		tagRouter.DELETE("/tags", controller.DeleteMultiTagHandler)
+		// 更新tag
+
 	}
 
 	// Class类别路由
 	classRouter := eng.Group(basePath)
 	{
-		classRouter.Use(middleware.JwtAuthorization())
-		// 获取所有tag
-		classRouter.GET("/class-all", controller.GetAllArticleHandler)
-		// 根据tag id获取tag详细信息
-		classRouter.GET("/class/:id", controller.GetArticleWithIdHandler)
-		// 添加新的tag
+		//classRouter.Use(middleware.JwtAuthorization())
+		// 获取所有class
+		classRouter.GET("/classes", controller.GetAllClassesHandler)
+		// 根据class id获取tag详细信息
+		classRouter.GET("/class/:id", controller.GetClassByIdHandler)
+		// 添加新的class
 		classRouter.POST("/class", controller.CreateClassHandler)
+
+		// 删除单个类别
+		classRouter.DELETE("/class/:id", controller.DeleteClassHandler)
+		// 删除多个类别
+		classRouter.DELETE("/classes", controller.DeleteMultiClassHandler)
 	}
 }

@@ -101,6 +101,10 @@ type TagCreateFormParams struct {
 	Desc string `json:"desc"`
 }
 
+type DeleteMultiTagParams struct {
+	Ids []int64 `json:"ids" binding:"required"` // 待删除的TagID列表
+}
+
 /*
 ==========================================
 

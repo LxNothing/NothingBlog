@@ -5,11 +5,42 @@ import (
 	"NothingBlog/models"
 	"NothingBlog/package/utils"
 	"NothingBlog/settings"
+	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
+
+func GetAllClassesHandler(ctx *gin.Context) {
+	cls, err := logic.GetAllClasses()
+	if err != nil {
+		zap.L().Debug("获取所有的class失败", zap.Error(err))
+		ResponseError(ctx, CodeServerBusy)
+		return
+	}
+
+	ResponseSuccess(ctx, cls)
+}
+
+func GetClassByIdHandler(ctx *gin.Context) {
+	idstr := ctx.Param("id")
+	id, err := strconv.ParseInt(idstr, 10, 64)
+	if err != nil {
+		zap.L().Debug("通过ID获取class失败", zap.Error(err))
+		ResponseError(ctx, CodeParameterInvalid)
+		return
+	}
+
+	cls, err := logic.GetClassById(id)
+	if err != nil {
+		zap.L().Debug("通过ID获取class失败", zap.Error(err))
+		ResponseError(ctx, CodeServerBusy)
+		return
+	}
+
+	ResponseSuccess(ctx, cls)
+}
 
 func CreateClassHandler(ctx *gin.Context) {
 	classParam := new(models.ClassCreateFormParams)
@@ -178,4 +209,45 @@ func GetAllClassHandler(ctx *gin.Context) {
 		"total_page": total_page,                 // 总共有多少页
 		"article":    atcs,
 	})
+}
+
+func DeleteClassHandler(ctx *gin.Context) {
+	clsId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		zap.L().Debug("Class的ID参数传递错误", zap.Error(err))
+		ResponseError(ctx, CodeParameterInvalid)
+		return
+	}
+
+	err = logic.DeleteClassById(clsId)
+	if err != nil {
+		zap.L().Error("删除Class失败", zap.Error(err))
+		if errors.Is(err, logic.ErrDeleteClassByIds) {
+			ResponseError(ctx, CodeHaveArticleInClass)
+			return
+		}
+		ResponseError(ctx, CodeServerBusy)
+		return
+	}
+	ResponseSuccessWithMsg(ctx, "删除Class成功", nil)
+}
+
+func DeleteMultiClassHandler(ctx *gin.Context) {
+	param := new(models.DeleteMultiTagParams)
+	if err := ctx.ShouldBindJSON(param); err != nil {
+		zap.L().Debug("Class的ID参数传递错误", zap.Error(err))
+		ResponseError(ctx, CodeParameterInvalid)
+		return
+	}
+	if err := logic.DeleteMultiClassById(param.Ids); err != nil {
+		zap.L().Error("删除Class失败", zap.Error(err))
+		if errors.Is(err, logic.ErrDeleteClassByIds) {
+			ResponseError(ctx, CodeHaveArticleInClass)
+			return
+		}
+
+		ResponseError(ctx, CodeServerBusy)
+		return
+	}
+	ResponseSuccessWithMsg(ctx, "删除Class成功", nil)
 }

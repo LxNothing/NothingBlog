@@ -62,6 +62,11 @@ func GetArticleWithIdHandler(ctx *gin.Context) {
 		return
 	}
 
+	// 更新文章的访问量 - 如果未登录进行访问则代表是客户端访问，admin访问不更新
+	if uid, _ := getCurrentUserId(ctx); uid == -1 {
+		_ = logic.UpdateArticleVisitCount(atcId, article.VisitCount+1)
+	}
+
 	ResponseSuccess(ctx, article)
 }
 

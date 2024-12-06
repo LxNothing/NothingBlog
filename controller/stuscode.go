@@ -26,6 +26,7 @@ const (
 	// 文章
 	CodeArticleTitleExisted
 	CodeArticleNotExisted
+	CodeHaveArticleInClass
 )
 
 var codeMsgMap = map[ResponseCodeType]string{
@@ -42,6 +43,7 @@ var codeMsgMap = map[ResponseCodeType]string{
 	CodeVerifyCodeInvaild:   "验证码错误",
 	CodeArticleTitleExisted: "文章名重复",
 	CodeArticleNotExisted:   "文章不存在",
+	CodeHaveArticleInClass:  "类别下存在文章",
 }
 
 func (rct ResponseCodeType) Msg() string {
