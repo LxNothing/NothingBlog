@@ -54,7 +54,7 @@ func AdminSetUp(basePath string, eng *gin.Engine) {
 		// 删除多个tag
 		tagRouter.DELETE("/tags", controller.DeleteMultiTagHandler)
 		// 更新tag
-
+		tagRouter.PUT("/tag", controller.UpdateTagHandler)
 	}
 
 	// Class类别路由
@@ -72,5 +72,7 @@ func AdminSetUp(basePath string, eng *gin.Engine) {
 		classRouter.DELETE("/class/:id", controller.DeleteClassHandler)
 		// 删除多个类别
 		classRouter.DELETE("/classes", controller.DeleteMultiClassHandler)
+		// 更新class
+		tagRouter.PUT("/class", controller.UpdateClassHandler)
 	}
 }

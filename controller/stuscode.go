@@ -27,6 +27,14 @@ const (
 	CodeArticleTitleExisted
 	CodeArticleNotExisted
 	CodeHaveArticleInClass
+
+	// tag
+	CodeTagExisted
+	CodeTagNotExisted
+
+	// class
+	CodeClassNotExisted
+	CodeClassNameExisted
 )
 
 var codeMsgMap = map[ResponseCodeType]string{
@@ -44,6 +52,10 @@ var codeMsgMap = map[ResponseCodeType]string{
 	CodeArticleTitleExisted: "文章名重复",
 	CodeArticleNotExisted:   "文章不存在",
 	CodeHaveArticleInClass:  "类别下存在文章",
+	CodeTagExisted:          "Tag名称重复",
+	CodeTagNotExisted:       "Tag不存在",
+	CodeClassNotExisted:     "Class不存在",
+	CodeClassNameExisted:    "Class名称重复",
 }
 
 func (rct ResponseCodeType) Msg() string {

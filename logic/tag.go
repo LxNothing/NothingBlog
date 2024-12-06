@@ -89,3 +89,7 @@ func DeleteTagById(id int64) error {
 func DeleteMultiTagById(ids []int64) error {
 	return mysql.DeleteTagByIds(ids)
 }
+
+func UpdateTag(tag *models.Tag) error {
+	return mysql.UpdateTagById(tag)
+}

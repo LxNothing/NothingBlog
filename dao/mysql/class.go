@@ -53,3 +53,7 @@ func QueryClassesByName(name string) (*models.Class, error) {
 func DeleteClassByIds(ids []int64) error {
 	return Db.Where("class_id in (ids)").Unscoped().Delete(&models.Class{}).Error
 }
+
+func UpdateClassById(class *models.Class) error {
+	return Db.Select("updated_at", "name", "desc").Where("class_id = ?", class.ClassId).Updates(class).Error
+}

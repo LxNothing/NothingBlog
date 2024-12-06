@@ -31,16 +31,16 @@ func QueryAllTags() ([]models.Tag, error) {
 	return tags, nil
 }
 
-func QueryTagById(tag *models.Tag) (err error) {
-	err = Db.Where("tag_id=?", tag.TagId).Take(tag).Error
+func QueryTagById(tag *models.Tag) error {
+	err := Db.Where("tag_id=?", tag.TagId).Take(tag).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return ErrTagInfoNotFound
 	}
-	return
+	return nil
 }
 
-func QueryTagByName(tag *models.Tag) (err error) {
-	err = Db.Where("name=?", tag.Name).Take(tag).Error
+func QueryTagByName(tag *models.Tag) error {
+	err := Db.Where("name=?", tag.Name).Take(tag).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return ErrTagInfoNotFound
 	}
@@ -49,12 +49,13 @@ func QueryTagByName(tag *models.Tag) (err error) {
 		return ErrTagOtherReason
 	}
 
-	return
+	return nil
 }
 
 // 根据ID更新tag信息
 func UpdateTagById(tag *models.Tag) (err error) {
-	return Db.Model(&models.Tag{}).Updates(tag).Error
+	// 使用这种方式预防gorm不更新0值
+	return Db.Select("updated_at", "name", "desc").Where("tag_id = ?", tag.TagId).Updates(tag).Error
 }
 
 // 根据种类名称，获取该种类名称下所有的tag信息

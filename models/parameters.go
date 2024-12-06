@@ -105,6 +105,13 @@ type DeleteMultiTagParams struct {
 	Ids []int64 `json:"ids" binding:"required"` // 待删除的TagID列表
 }
 
+// 更新Tag的参数
+type UpdateTagParams struct {
+	TagId int64  `json:"tag_id,string" binding:"required"`
+	Name  string `json:"name" binding:"required"`
+	Desc  string `json:"desc"`
+}
+
 /*
 ==========================================
 
@@ -119,4 +126,11 @@ type ClassFormsParams struct {
 type ClassCreateFormParams struct {
 	Name string `json:"name" binding:"required"`
 	Desc string `json:"desc"`
+}
+
+// 更新Tag的参数
+type UpdateClassParams struct {
+	ClassId int64  `json:"class_id,string" binding:"required"`
+	Name    string `json:"name" binding:"required"`
+	Desc    string `json:"desc"`
 }

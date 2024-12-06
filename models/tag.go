@@ -10,7 +10,7 @@ import (
 type Tag struct {
 	gorm.Model
 	TagId        int64     `json:"tag_id" gorm:"type:bigint(20);not null;unique"`     // tag id 由应用层生成
-	Name         string    `json:"name" gorm:"type:varchar(100);not null;"`           // 标签名称
+	Name         string    `json:"name" gorm:"type:varchar(100);not null;unique"`     // 标签名称
 	Desc         string    `json:"desc" gorm:"type:varchar(100);"`                    // 标签的描述信息
 	ArticleList  []Article `json:"article_list" gorm:"many2many:tag_article"`         // 反向引用 文章列表
 	ArticleCount uint32    `json:"article_count" gorm:"type:int;not null;default 0;"` // 该标签下拥有的文章数量

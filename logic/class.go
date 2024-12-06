@@ -80,3 +80,7 @@ func DeleteMultiClassById(ids []int64) error {
 
 	return mysql.DeleteClassByIds(ids)
 }
+
+func UpdateClass(class *models.Class) error {
+	return mysql.UpdateClassById(class)
+}

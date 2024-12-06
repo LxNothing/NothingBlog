@@ -86,3 +86,42 @@ func DeleteMultiTagHandler(ctx *gin.Context) {
 	}
 	ResponseSuccessWithMsg(ctx, "删除Tag成功", nil)
 }
+
+func UpdateTagHandler(ctx *gin.Context) {
+	newTag := new(models.UpdateTagParams)
+
+	if err := ctx.ShouldBindJSON(newTag); err != nil {
+		zap.L().Debug("解析修改Tag的参数错误", zap.Error(err))
+		ResponseError(ctx, CodeParameterInvalid)
+		return
+	}
+
+	// // 查找ID是否存在
+	_, err := logic.GetTagById(newTag.TagId)
+	if err != nil {
+		zap.L().Debug("ID错误", zap.Error(err))
+		ResponseErrorWithMsg(ctx, CodeParameterInvalid, "要修改的Tag不存在")
+		return
+	}
+
+	// 查找名称是否重复
+	oldTag, err := logic.GetTagByName(newTag.Name)
+	if err == nil && oldTag.TagId > 0 && oldTag.TagId != newTag.TagId {
+		zap.L().Debug("Tag名称重复")
+		ResponseError(ctx, CodeTagExisted) // 名称重复
+		return
+	}
+
+	var tag = &models.Tag{
+		TagId: newTag.TagId,
+		Name:  newTag.Name,
+		Desc:  newTag.Desc,
+	}
+
+	if err := logic.UpdateTag(tag); err != nil {
+		zap.L().Debug("更新Tag失败", zap.Error(err))
+		ResponseError(ctx, CodeServerBusy)
+		return
+	}
+	ResponseSuccessWithMsg(ctx, "修改Tag成功", nil)
+}

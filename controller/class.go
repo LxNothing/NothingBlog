@@ -251,3 +251,42 @@ func DeleteMultiClassHandler(ctx *gin.Context) {
 	}
 	ResponseSuccessWithMsg(ctx, "删除Class成功", nil)
 }
+
+func UpdateClassHandler(ctx *gin.Context) {
+	newClass := new(models.UpdateClassParams)
+
+	if err := ctx.ShouldBindJSON(newClass); err != nil {
+		zap.L().Debug("解析修改Class的参数错误", zap.Error(err))
+		ResponseError(ctx, CodeParameterInvalid)
+		return
+	}
+
+	// // 查找ID是否存在
+	_, err := logic.GetClassById(newClass.ClassId)
+	if err != nil {
+		zap.L().Debug("ID错误", zap.Error(err))
+		ResponseErrorWithMsg(ctx, CodeParameterInvalid, "要修改的Class不存在")
+		return
+	}
+
+	// 查找名称是否重复
+	oldClass, err := logic.GetClassByName(newClass.Name)
+	if err == nil && oldClass.ClassId > 0 && oldClass.ClassId != newClass.ClassId {
+		zap.L().Debug("Class名称重复")
+		ResponseError(ctx, CodeClassNameExisted) // 名称重复
+		return
+	}
+
+	var class = &models.Class{
+		ClassId: newClass.ClassId,
+		Name:    newClass.Name,
+		Desc:    newClass.Desc,
+	}
+
+	if err := logic.UpdateClass(class); err != nil {
+		zap.L().Debug("更新Class失败", zap.Error(err))
+		ResponseError(ctx, CodeServerBusy)
+		return
+	}
+	ResponseSuccessWithMsg(ctx, "修改类别成功", nil)
+}
