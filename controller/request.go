@@ -2,7 +2,6 @@ package controller
 
 import (
 	"errors"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,19 +27,19 @@ func getCurrentUserId(ctx *gin.Context) (int64, error) {
 }
 
 // 从参数获取要查询的条数和
-func getBlogSizeAndPage(ctx *gin.Context) (page int64, size int64, err error) {
-	pageStr := ctx.Query("page")
-	sizeStr := ctx.Query("size")
+// func getBlogSizeAndPage(ctx *gin.Context) (page int64, size int64, err error) {
+// 	pageStr := ctx.Query("page")
+// 	sizeStr := ctx.Query("size")
 
-	page, err = strconv.ParseInt(pageStr, 10, 64)
-	if err != nil {
-		page = 1
-	}
+// 	page, err = strconv.ParseInt(pageStr, 10, 64)
+// 	if err != nil {
+// 		page = 1
+// 	}
 
-	size, err = strconv.ParseInt(sizeStr, 10, 64)
-	if err != nil {
-		size = 10
-	}
-	err = nil
-	return
-}
+// 	size, err = strconv.ParseInt(sizeStr, 10, 64)
+// 	if err != nil {
+// 		size = 10
+// 	}
+// 	err = nil
+// 	return
+// }

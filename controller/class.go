@@ -5,6 +5,7 @@ import (
 	"NothingBlog/models"
 	"NothingBlog/package/utils"
 	"NothingBlog/settings"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -41,9 +42,11 @@ type category struct {
 func GetAllClassHandler(ctx *gin.Context) {
 	var clsId int64
 	var tagId int64
+	var page int = 1
 	// 获取参数
 	clsStr := ctx.Query("class")
 	tagStr := ctx.Query("tag")
+	pageStr := ctx.Query("page")
 
 	if clsStr == "" {
 		clsStr = "all"
@@ -51,6 +54,16 @@ func GetAllClassHandler(ctx *gin.Context) {
 
 	if tagStr == "" {
 		tagStr = "all"
+	}
+
+	if pageStr != "" {
+		pg, err := strconv.ParseInt(pageStr, 10, 64)
+		if err != nil {
+			zap.L().Debug("页号传递错误，解析失败")
+			ResponseError(ctx, CodeParameterInvalid)
+			return
+		}
+		page = int(pg)
 	}
 
 	// 判断class是否已经存在
@@ -129,7 +142,7 @@ func GetAllClassHandler(ctx *gin.Context) {
 	// class = 具体的class tag = all
 	// class = 具体的class tag = 具体的tag - 使用两者进行排序
 	// 都是 all 则 不包含这两个筛选条件，通过时间或者阅读量进行排序
-	var page = 1
+
 	var pagesize = int(settings.Confg.PageSize)
 	var atcs []models.ArticleBriefReturn
 	var total int64
@@ -139,14 +152,14 @@ func GetAllClassHandler(ctx *gin.Context) {
 			atcs, total, err = logic.GetArticleWithPage(page, pagesize, models.StatusDraft, models.PrivilegePrivte, 0)
 
 		} else {
-			atcs, total, err = logic.GetArticleByTagWithPage(tagId, page, pagesize, 0, 0)
+			atcs, total, err = logic.GetArticleByTagWithPage(tagId, page, pagesize, models.StatusDraft, models.PrivilegePrivte)
 		}
 	} else {
 		if tagStr == "all" {
-			atcs, total, err = logic.GetArticleByClassWithPage(clsId, page, pagesize, 0, 0)
+			atcs, total, err = logic.GetArticleByClassWithPage(clsId, page, pagesize, models.StatusDraft, models.PrivilegePrivte)
 
 		} else {
-			atcs, total, err = logic.GetArticleByClassAndTagWithPage(clsId, tagId, page, pagesize)
+			atcs, total, err = logic.GetArticleByClassAndTagWithPage(clsId, tagId, page, pagesize, models.StatusDraft, models.PrivilegePrivte)
 		}
 	}
 
@@ -161,8 +174,8 @@ func GetAllClassHandler(ctx *gin.Context) {
 	// 返回结果
 	ResponseSuccess(ctx, gin.H{
 		"category":   category,
-		"cur_page":   page,       // 当前返回的页数
-		"total_page": total_page, // 总共有多少页
+		"cur_page":   min(page, int(total_page)), // 当前返回的页数-超出总页数返回最后一页
+		"total_page": total_page,                 // 总共有多少页
 		"article":    atcs,
 	})
 }

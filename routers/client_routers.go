@@ -17,18 +17,18 @@ func ClientSetUp(basePath string, eng *gin.Engine) {
 		router.GET("/page/:page", controller.GetIndexHandler)
 		// 根据文章ID获取文章
 		router.GET("/article/:id", controller.GetArticleWithIdHandler)
-		// 获取所有tag
-		router.GET("/tags", controller.GetAllTagsHandler)
-		// 根据tag id获取tag详细信息
-		router.GET("/tag/:id", nil)
-		// 获取指定tag下的文章列表
-		router.GET("/tag/:id/atc/:page", nil)
+		// // 获取所有tag
+		// router.GET("/tags", controller.GetAllTagsHandler)
+		// // 根据tag id获取tag详细信息
+		// router.GET("/tag/:id", nil)
+		// // 获取指定tag下的文章列表
+		// router.GET("/tag/:id/atc/:page", nil)
 
-		// 获取所有class
-		router.GET("/classes", controller.GetAllClassHandler)
-		// 根据class id获取tag详细信息
-		router.GET("/classes/:id", nil)
-		router.GET("/classes/:id/atc/:page", nil)
+		// // 获取所有class
+		// router.GET("/classes", controller.GetAllClassHandler)
+		// // 根据class id获取tag详细信息
+		// router.GET("/classes/:id", nil)
+		// router.GET("/classes/:id/atc/:page", nil)
 
 		router.GET("/category", controller.GetAllClassHandler) // 等价于 /category?class=all&tag=all"
 	}

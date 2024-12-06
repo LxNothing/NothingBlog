@@ -136,4 +136,35 @@ func CreateArticleHandler(ctx *gin.Context) {
 
 // 更新文章访问量
 
-// 删除文章
+// 删除单篇文章
+func DeleteArticleHandler(ctx *gin.Context) {
+	atcId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		zap.L().Debug("查询文章的ID参数传递错误", zap.Error(err))
+		ResponseError(ctx, CodeParameterInvalid)
+		return
+	}
+
+	err = logic.DeleteArticleById(atcId)
+	if err != nil {
+		zap.L().Error("删除文章失败", zap.Error(err))
+		ResponseError(ctx, CodeServerBusy)
+		return
+	}
+	ResponseSuccessWithMsg(ctx, "删除文章成功", nil)
+}
+
+func DeleteMultiArticleHandler(ctx *gin.Context) {
+	param := new(models.DeleteMultiArticleParams)
+	if err := ctx.ShouldBindJSON(param); err != nil {
+		zap.L().Debug("查询文章的ID参数传递错误", zap.Error(err))
+		ResponseError(ctx, CodeParameterInvalid)
+		return
+	}
+	if err := logic.DeleteMultiArticleById(param.Ids); err != nil {
+		zap.L().Error("删除文章失败", zap.Error(err))
+		ResponseError(ctx, CodeServerBusy)
+		return
+	}
+	ResponseSuccessWithMsg(ctx, "删除文章成功", nil)
+}

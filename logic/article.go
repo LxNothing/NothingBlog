@@ -17,6 +17,7 @@ var (
 	ErrArticleQueryFailed = errors.New("查询数据库出错")
 )
 
+// generateReturnBriefArticle 将完整的文章数据结构映射到简略的文章结构中
 func generateReturnBriefArticle(atc *models.Article) *models.ArticleBriefReturn {
 	tmp := &models.ArticleBriefReturn{
 		ArticleId:  atc.ArticleId,
@@ -50,6 +51,7 @@ func generateReturnEntireArticle(atc *models.Article) *models.ArticleEntireRetur
 	}
 }
 
+// CreateNewArticle 创建新文章
 func CreateNewArticle(article *models.Article, tagList []models.TagFormsParams) error {
 	// 根据文章标题查询文章
 	if err := mysql.QueryArticleByTitle(article.Title); err != nil {
@@ -78,6 +80,7 @@ func CreateNewArticle(article *models.Article, tagList []models.TagFormsParams) 
 	return mysql.CreateArticle(article, tagList)
 }
 
+// GetArticleById 根据文章ID获取文章
 func GetArticleById(id int64) (*models.ArticleEntireReturn, error) {
 	article, err := mysql.QueryArticleById(id)
 	if article == nil {
@@ -105,8 +108,8 @@ func GetAllArticle() ([]models.Article, error) {
 	return atcs, nil
 }
 
-func GetArticleByClassAndTagWithPage(clsId, tagId int64, page int, size int) ([]models.ArticleBriefReturn, int64, error) {
-	atcs_tmp, total, err := mysql.QueryArticleByClassAndTagWithPage(clsId, tagId, page, size)
+func GetArticleByClassAndTagWithPage(clsId, tagId int64, page int, size int, state models.StatusType, privilege models.PrivilegeType) ([]models.ArticleBriefReturn, int64, error) {
+	atcs_tmp, total, err := mysql.QueryArticleByClassAndTagWithPage(clsId, tagId, page, size, state, privilege)
 
 	atcs := make([]models.ArticleBriefReturn, 0, len(atcs_tmp))
 
@@ -122,7 +125,7 @@ func GetArticleByClassAndTagWithPage(clsId, tagId int64, page int, size int) ([]
 }
 
 func GetArticleByClassWithPage(classId int64, page int, size int, state models.StatusType, privilege models.PrivilegeType) ([]models.ArticleBriefReturn, int64, error) {
-	atcs_tmp, total, err := mysql.QueryArticleByClassWithPage(classId, page, size)
+	atcs_tmp, total, err := mysql.QueryArticleByClassWithPage(classId, page, size, state, privilege)
 	atcs := make([]models.ArticleBriefReturn, 0, len(atcs_tmp))
 
 	for _, atc := range atcs_tmp {
@@ -137,7 +140,7 @@ func GetArticleByClassWithPage(classId int64, page int, size int, state models.S
 }
 
 func GetArticleByTagWithPage(tagId int64, page int, size int, state models.StatusType, privilege models.PrivilegeType) ([]models.ArticleBriefReturn, int64, error) {
-	atcs_tmp, total, err := mysql.QueryArticleByTagWithPage(tagId, page, size)
+	atcs_tmp, total, err := mysql.QueryArticleByTagWithPage(tagId, page, size, state, privilege)
 	atcs := make([]models.ArticleBriefReturn, 0, len(atcs_tmp))
 
 	for _, atc := range atcs_tmp {
@@ -164,4 +167,20 @@ func GetArticleWithPage(page int, size int, state models.StatusType, privilege m
 	}
 
 	return atcs, total, nil
+}
+
+func DeleteArticleById(id int64) error {
+	//return mysql.DeleteArticleById(id)
+	ids := make([]int64, 1)
+	ids[0] = id
+	return mysql.DeleteMultiArticleById(ids)
+}
+
+func DeleteMultiArticleById(ids []int64) error {
+	return mysql.DeleteMultiArticleById(ids)
+}
+
+// UpdateVisitCount 更新访问量
+func UpdateArticleVisitCount(id int64, newCount uint32) error {
+	return mysql.UpdateArticleVisitCountById(id, newCount)
 }

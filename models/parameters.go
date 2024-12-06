@@ -80,6 +80,10 @@ type NewArticleFormsParams struct {
 	Content   string           `json:"content" binding:"required"`         // 文章内容
 }
 
+type DeleteMultiArticleParams struct {
+	Ids []int64 `json:"ids" binding:"required"` // 待删除的文章ID列表
+}
+
 /*
 ==========================================
 
