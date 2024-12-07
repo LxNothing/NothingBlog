@@ -212,6 +212,14 @@ func DeleteMultiArticleById(ids []int64) error {
 	return mysql.DeleteMultiArticleById(ids)
 }
 
+func UpdateArticleStatusById(ids []int64, del bool) error {
+	var stus = models.StatusDelete
+	if !del {
+		stus = models.StatusCommit
+	}
+	return mysql.UpdateArticleStatusById(ids, stus)
+}
+
 // UpdateVisitCount 更新访问量
 func UpdateArticleVisitCount(id int64, newCount uint32) error {
 	return mysql.UpdateArticleVisitCountById(id, newCount)

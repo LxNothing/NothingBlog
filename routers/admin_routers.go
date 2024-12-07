@@ -32,11 +32,12 @@ func AdminSetUp(basePath string, eng *gin.Engine) {
 		articleRouter.GET("/article/:id", controller.GetArticleWithIdHandler)
 		// 添加新的文章
 		articleRouter.POST("/article", controller.CreateArticleHandler)
-
-		// 删除指定ID的文章
+		// 硬删除指定ID的文章
 		articleRouter.DELETE("/article/:id", controller.DeleteArticleHandler)
-		// 删除多篇文章
+		// 硬删除多篇文章
 		articleRouter.DELETE("/articles", controller.DeleteMultiArticleHandler)
+		// 软删除文章
+		articleRouter.PUT("/soft-article", controller.UpdateArticleStatusHandler)
 		// 更新文章
 		articleRouter.PUT("/article", controller.UpdateArticleHandler)
 	}

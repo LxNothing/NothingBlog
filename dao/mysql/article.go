@@ -471,7 +471,12 @@ func DeleteMultiArticleById(ids []int64) error {
 	return tx.Commit().Error
 }
 
+// UpdateArticleStatusById 更新文章的状态
+func UpdateArticleStatusById(ids []int64, tp models.StatusType) error {
+	return Db.Model(&models.Article{}).Where("article_id in (?)", ids).UpdateColumn("status", tp).Error
+}
+
 // UpdateArticleVisitCountById 更新文章的访问量
 func UpdateArticleVisitCountById(id int64, newCount uint32) error {
-	return Db.Model(&models.Article{}).Where("id = ?", id).UpdateColumn("visit_count", newCount).Error
+	return Db.Model(&models.Article{}).Where("article_id = ?", id).UpdateColumn("visit_count", newCount).Error
 }

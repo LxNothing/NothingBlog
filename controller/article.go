@@ -183,8 +183,8 @@ func DeleteArticleHandler(ctx *gin.Context) {
 	ResponseSuccessWithMsg(ctx, "删除文章成功", nil)
 }
 
-// DeleteMultiArticleHandler 删除多篇文章
-// @Summary 删除多篇文章的接口
+// DeleteMultiArticleHandler 删除多篇文章 - 硬删除
+// @Summary 删除多篇文章的接口 - 硬删除，会直接删除数据库中的数据
 // @Description 通过该接口可以删除指定的文章
 // @Tags 文章相关接口
 // @Accept application/json
@@ -197,7 +197,7 @@ func DeleteArticleHandler(ctx *gin.Context) {
 func DeleteMultiArticleHandler(ctx *gin.Context) {
 	param := new(models.DeleteMultiArticleParams)
 	if err := ctx.ShouldBindJSON(param); err != nil {
-		zap.L().Debug("查询文章的ID参数传递错误", zap.Error(err))
+		zap.L().Debug("删除文章的ID参数传递错误", zap.Error(err))
 		ResponseError(ctx, CodeParameterInvalid)
 		return
 	}
@@ -207,6 +207,33 @@ func DeleteMultiArticleHandler(ctx *gin.Context) {
 		return
 	}
 	ResponseSuccessWithMsg(ctx, "删除文章成功", nil)
+}
+
+// UpdateArticleStatusHandler 删除多篇文章 - 软删除 或者恢复
+// @Summary 删除时,只会更新其状态为删除状态,不会删除数据库中的数据，恢复时将其恢复为指定状态
+// @Description 通过该接口可以删除指定的文章 - 软删除
+// @Tags 文章相关接口
+// @Accept application/json
+// @Produce application/json
+// @Param Authorization header string true "Bearer token(jwt)"
+// @Param object body models.SoftDeleteArticleParams true "删除文章的参数"
+// @Security ApiKeyAuth
+// @Success 200 {object} ResponseData "code=200表示成功,其余失败"
+// @Router /articles [delete]
+func UpdateArticleStatusHandler(ctx *gin.Context) {
+	param := new(models.SoftDeleteArticleParams)
+	if err := ctx.ShouldBindJSON(param); err != nil {
+		zap.L().Debug("软删除文章的ID参数传递错误", zap.Error(err))
+		ResponseError(ctx, CodeParameterInvalid)
+		return
+	}
+
+	if err := logic.UpdateArticleStatusById(param.Ids, param.DelFalg); err != nil {
+		zap.L().Debug("软删除文章失败", zap.Error(err))
+		ResponseError(ctx, CodeServerBusy)
+		return
+	}
+	ResponseSuccessWithMsg(ctx, "软删除文章成功", nil)
 }
 
 // UpdateArticleHandler 更新文章

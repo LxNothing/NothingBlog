@@ -91,6 +91,12 @@ type DeleteMultiArticleParams struct {
 	Ids []int64 `json:"ids" binding:"required"` // 待删除的文章ID列表
 }
 
+// 软删除的文章参数
+type SoftDeleteArticleParams struct {
+	Ids     []int64 `json:"ids" binding:"required"`      // 待删除的文章ID列表
+	DelFalg bool    `json:"del_flag" binding:"required"` // true - 删除  false - 恢复
+}
+
 /*
 ==========================================
 
