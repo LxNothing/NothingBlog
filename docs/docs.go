@@ -15,7 +15,169 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/article/all": {
+        "/article": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以更新指定的文章",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "文章相关接口"
+                ],
+                "summary": "更新文章的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "更新文章的参数",
+                        "name": "object",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateArticleFormsParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code=200表示成功其余失败",
+                        "schema": {
+                            "$ref": "#/definitions/controller.ResponseData"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以创建文章",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "文章相关接口"
+                ],
+                "summary": "创建文章的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "创建文章的参数",
+                        "name": "object",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.NewArticleFormsParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code=200表示成功其余失败",
+                        "schema": {
+                            "$ref": "#/definitions/controller.ResponseData"
+                        }
+                    }
+                }
+            }
+        },
+        "/article/:id": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以查询文章详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "文章相关接口"
+                ],
+                "summary": "通过文章ID查询文章详细信息的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code=200表示成功其余失败",
+                        "schema": {
+                            "$ref": "#/definitions/controller.ResponseData"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以删除指定的文章",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "文章相关接口"
+                ],
+                "summary": "删除单篇文章的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code=200表示成功其余失败",
+                        "schema": {
+                            "$ref": "#/definitions/controller.ResponseData"
+                        }
+                    }
+                }
+            }
+        },
+        "/articles": {
             "get": {
                 "security": [
                     {
@@ -36,7 +198,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer 用户令牌",
+                        "description": "Bearer token(jwt)",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -45,6 +207,50 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller.ResponseData"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以删除指定的文章",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "文章相关接口"
+                ],
+                "summary": "删除多篇文章的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "删除文章的参数",
+                        "name": "object",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DeleteMultiArticleParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code=200表示成功其余失败",
                         "schema": {
                             "$ref": "#/definitions/controller.ResponseData"
                         }
@@ -253,7 +459,12 @@ const docTemplate = `{
                 1009,
                 1010,
                 1011,
-                1012
+                1012,
+                1013,
+                1014,
+                1015,
+                1016,
+                1017
             ],
             "x-enum-varnames": [
                 "CodeSuccess",
@@ -268,7 +479,12 @@ const docTemplate = `{
                 "CodeCommunityIdInvalid",
                 "CodeVerifyCodeInvaild",
                 "CodeArticleTitleExisted",
-                "CodeArticleNotExisted"
+                "CodeArticleNotExisted",
+                "CodeHaveArticleInClass",
+                "CodeTagExisted",
+                "CodeTagNotExisted",
+                "CodeClassNotExisted",
+                "CodeClassNameExisted"
             ]
         },
         "controller.ResponseData": {
@@ -281,6 +497,21 @@ const docTemplate = `{
                     "description": "omitempty 该字段为空时忽略"
                 },
                 "msg": {}
+            }
+        },
+        "models.DeleteMultiArticleParams": {
+            "type": "object",
+            "required": [
+                "ids"
+            ],
+            "properties": {
+                "ids": {
+                    "description": "待删除的文章ID列表",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
             }
         },
         "models.LoginParams": {
@@ -338,6 +569,86 @@ const docTemplate = `{
                 }
             }
         },
+        "models.NewArticleFormsParams": {
+            "type": "object",
+            "required": [
+                "class_id",
+                "content",
+                "title"
+            ],
+            "properties": {
+                "class_id": {
+                    "description": "文章所属的分类 - 比如教程，分享等",
+                    "type": "string",
+                    "example": "0"
+                },
+                "content": {
+                    "description": "文章内容",
+                    "type": "string"
+                },
+                "en_comment": {
+                    "description": "是否允许评论 false-不允许 true-允许",
+                    "type": "boolean"
+                },
+                "image": {
+                    "description": "文章缩略图",
+                    "type": "string"
+                },
+                "privilege": {
+                    "description": "文章权限 0-公开 1-私有",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.PrivilegeType"
+                        }
+                    ]
+                },
+                "status": {
+                    "description": "文章状态 0-草稿 1-发布 2-删除",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.StatusType"
+                        }
+                    ]
+                },
+                "summary": {
+                    "description": "文章的摘要信息",
+                    "type": "string"
+                },
+                "tag_id_list": {
+                    "description": "文章标签-标签可以为空",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TagFormsParams"
+                    }
+                },
+                "title": {
+                    "description": "文章标题",
+                    "type": "string"
+                },
+                "top_flag": {
+                    "description": "是否置顶标志 false-没有置顶 true-置顶",
+                    "type": "boolean"
+                }
+            }
+        },
+        "models.PrivilegeType": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2
+            ],
+            "x-enum-comments": {
+                "PrivilegeAll": "所有权限",
+                "PrivilegePrivte": "1- 当前文章私有，客户端不可见",
+                "PrivilegePublic": "0 - 当前文章是公开的，客户端可见（默认）"
+            },
+            "x-enum-varnames": [
+                "PrivilegePublic",
+                "PrivilegePrivte",
+                "PrivilegeAll"
+            ]
+        },
         "models.ResetPasswordParams": {
             "type": "object",
             "required": [
@@ -386,6 +697,107 @@ const docTemplate = `{
                             "$ref": "#/definitions/models.VerifyCodeParams"
                         }
                     ]
+                }
+            }
+        },
+        "models.StatusType": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2,
+                3
+            ],
+            "x-enum-comments": {
+                "StatusAll": "所有状态",
+                "StatusCommit": "1 - 已经提交，外部可以访问（同时Privilege要为公开才可以）",
+                "StatusDelete": "2 - 预删除，处于这种状态外部不可见，但是数据仍然在数据库（类似垃圾回收站）",
+                "StatusDraft": "0 - 草稿"
+            },
+            "x-enum-varnames": [
+                "StatusDraft",
+                "StatusCommit",
+                "StatusDelete",
+                "StatusAll"
+            ]
+        },
+        "models.TagFormsParams": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "description": "tag id",
+                    "type": "string",
+                    "example": "0"
+                }
+            }
+        },
+        "models.UpdateArticleFormsParams": {
+            "type": "object",
+            "required": [
+                "article_id",
+                "class_id",
+                "content",
+                "title"
+            ],
+            "properties": {
+                "article_id": {
+                    "type": "string",
+                    "example": "0"
+                },
+                "class_id": {
+                    "description": "文章所属的分类 - 比如教程，分享等",
+                    "type": "string",
+                    "example": "0"
+                },
+                "content": {
+                    "description": "文章内容",
+                    "type": "string"
+                },
+                "en_comment": {
+                    "description": "是否允许评论 false-不允许 true-允许",
+                    "type": "boolean"
+                },
+                "image": {
+                    "description": "文章缩略图",
+                    "type": "string"
+                },
+                "privilege": {
+                    "description": "文章权限 0-公开 1-私有",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.PrivilegeType"
+                        }
+                    ]
+                },
+                "status": {
+                    "description": "文章状态 0-草稿 1-发布 2-删除",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.StatusType"
+                        }
+                    ]
+                },
+                "summary": {
+                    "description": "文章的摘要信息",
+                    "type": "string"
+                },
+                "tag_id_list": {
+                    "description": "文章标签-标签可以为空",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TagFormsParams"
+                    }
+                },
+                "title": {
+                    "description": "文章标题",
+                    "type": "string"
+                },
+                "top_flag": {
+                    "description": "是否置顶标志 false-没有置顶 true-置顶",
+                    "type": "boolean"
                 }
             }
         },

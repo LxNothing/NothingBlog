@@ -54,7 +54,7 @@ func generateReturnEntireArticle(atc *models.Article) *models.ArticleEntireRetur
 // CreateNewArticle 创建新文章
 func CreateNewArticle(article *models.Article, tagList []models.TagFormsParams) error {
 	// 根据文章标题查询文章
-	if err := mysql.QueryArticleByTitle(article.Title); err != nil {
+	if atc, err := mysql.QueryArticleByTitle(article.Title); atc != nil {
 		zap.L().Debug("文章名称重复", zap.Error(err))
 		return ErrArticleNameExisted
 	}
@@ -78,6 +78,38 @@ func CreateNewArticle(article *models.Article, tagList []models.TagFormsParams) 
 
 	// 访问数据库 - 进行文章写入操作
 	return mysql.CreateArticle(article, tagList)
+}
+
+// UpdateArticle 更新已经存在的文章
+func UpdateArticle(atcId int64, newAtc *models.Article, tagList []models.TagFormsParams) error {
+	var oldAtc *models.Article
+	var err error
+	// 根据文章标题查询文章 - 文章标题不允许重复
+	if oldAtc, err = mysql.QueryArticleByTitle(newAtc.Title); oldAtc != nil && oldAtc.ArticleId != atcId {
+		zap.L().Debug("修改的文章名称不允许重复", zap.Error(err))
+		return ErrArticleNameExisted
+	}
+
+	// 根据文章ID查询对应的文章是否存在
+	if oldAtc, err = mysql.QueryArticleById(atcId); oldAtc == nil {
+		zap.L().Debug("更新文章时,传递文章ID不存在", zap.Error(err))
+		return ErrArticleNotExisted
+	}
+
+	// 文章分类ID，文章tag 由 数据库插入的时候进行自动维护，因为建表的时候就关联了对应的键
+	if newAtc.Image == "" {
+		newAtc.Image = "to do, default image"
+	}
+
+	newAtc.ArticleId = atcId
+
+	// 如果文章摘要为空 - 可以使用文章的前多少个字符作为摘要
+	if newAtc.Summary == "" {
+		newAtc.Summary = "to do, default summary"
+	}
+
+	// 访问数据库 - 对文章进行更新
+	return mysql.UpdateArticle(newAtc, oldAtc, tagList)
 }
 
 // GetArticleById 根据文章ID获取文章

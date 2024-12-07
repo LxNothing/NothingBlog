@@ -27,7 +27,7 @@ func AdminSetUp(basePath string, eng *gin.Engine) {
 	{
 		//articleRouter.Use(middleware.JwtAuthorization())
 		// 获取所有文章
-		articleRouter.GET("/article/all", controller.GetAllArticleHandler)
+		articleRouter.GET("/articles", controller.GetAllArticleHandler)
 		// 根据文章ID获取文章
 		articleRouter.GET("/article/:id", controller.GetArticleWithIdHandler)
 		// 添加新的文章
@@ -37,6 +37,8 @@ func AdminSetUp(basePath string, eng *gin.Engine) {
 		articleRouter.DELETE("/article/:id", controller.DeleteArticleHandler)
 		// 删除多篇文章
 		articleRouter.DELETE("/articles", controller.DeleteMultiArticleHandler)
+		// 更新文章
+		articleRouter.PUT("/article", controller.UpdateArticleHandler)
 	}
 
 	// Tag路由

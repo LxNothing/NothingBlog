@@ -67,6 +67,7 @@ type ModifyPasswordParams struct {
 
 ==========================================
 */
+// 新建文章的前端数据
 type NewArticleFormsParams struct {
 	TagIdList []TagFormsParams `json:"tag_id_list"`                        // 文章标签-标签可以为空
 	ClassId   int64            `json:"class_id,string" binding:"required"` // 文章所属的分类 - 比如教程，分享等
@@ -78,6 +79,12 @@ type NewArticleFormsParams struct {
 	Summary   string           `json:"summary"`                            // 文章的摘要信息
 	Image     string           `json:"image"`                              // 文章缩略图
 	Content   string           `json:"content" binding:"required"`         // 文章内容
+}
+
+// 更新文章的前端数据
+type UpdateArticleFormsParams struct {
+	ArticleId int64 `json:"article_id,string" binding:"required"`
+	NewArticleFormsParams
 }
 
 type DeleteMultiArticleParams struct {

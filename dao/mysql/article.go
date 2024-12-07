@@ -84,15 +84,107 @@ func CreateArticle(a *models.Article, tagList []models.TagFormsParams) error {
 	return tx.Commit().Error
 }
 
-// 根据文章名称查询文章 nil-文章不存在 错误-文章存在
-func QueryArticleByTitle(title string) error {
-	article := new(models.Article)
+func UpdateArticle(new *models.Article, old *models.Article, tagList []models.TagFormsParams) error {
+	tx := Db.Begin()
+	defer func() {
+		if err := recover(); err != nil {
+			tx.Rollback()
+		}
+	}()
 
-	err := Db.Where("title = ?", title).Take(article).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil
+	if tx.Error != nil {
+		zap.L().Debug("更新文章时,开启事务出错")
+		return tx.Error
 	}
-	return ErrArticleExisted
+
+	// 更新文章表 - 使用map更新避免gorm默认不更新0值
+	err := tx.Model(&models.Article{}).Where("`article_id` = ?", new.ArticleId).
+		Updates(map[string]interface{}{
+			"class_id":   new.ClassId,
+			"top_flag":   new.TopFlag,
+			"en_comment": new.EnComment,
+			"status":     new.Status,
+			"privilege":  new.Privilege,
+			"title":      new.Title,
+			"summary":    new.Summary,
+			"image":      new.Image,
+			"content":    new.Content,
+		}).Error
+	if err != nil {
+		zap.L().Debug("更新文章时,更新文章表错误", zap.Error(err))
+		tx.Rollback()
+		return err
+	}
+
+	// 更新classes表 - 文章的class改变时才更新
+	if new.ClassId != old.ClassId {
+		// 旧类别的文章数量 - 1
+		err = tx.Exec(`UPDATE classes 
+						SET atc_count = atc_count - 1 
+						WHERE (class_id = ? AND atc_count > 0)`, old.ClassId).Error
+		if err != nil {
+			zap.L().Debug("更新文章时,更新文章表错误", zap.Error(err))
+			tx.Rollback()
+			return err
+		}
+		// 新类别的文章数量 + 1
+		err = tx.Exec(`UPDATE classes 
+						SET atc_count = atc_count + 1 
+						WHERE class_id = ?`, new.ClassId).Error
+		if err != nil {
+			zap.L().Debug("更新文章时,更新文章表错误", zap.Error(err))
+			tx.Rollback()
+			return err
+		}
+	}
+
+	// 更新tag表 - 对tag表中的文章数量 - 1
+	err = tx.Exec(`UPDATE tags 
+					SET article_count = article_count - 1 
+					WHERE tag_id IN (SELECT tag_id FROM tag_article WHERE article_id = ?) AND article_count > 0`, new.ArticleId).Error
+	if err != nil {
+		zap.L().Debug("更新文章时,更新Tag表错误", zap.Error(err))
+		tx.Rollback()
+		return err
+	}
+
+	// 更新tag表 - 删除标签文章表中关联记录
+	err = tx.Exec("DELETE FROM tag_article WHERE article_id = ?", new.ArticleId).Error
+	if err != nil {
+		tx.Rollback()
+		zap.L().Debug("更新文章时,更新Tag-article表错误")
+		return err
+	}
+
+	// 重新建立tag表和文章的关联
+	for _, v := range tagList {
+		if err := tx.Exec("INSERT INTO tag_article (article_id, tag_id) values (?,?)", new.ArticleId, v.Id).Error; err != nil {
+			tx.Rollback()
+			zap.L().Debug("更新文章和tag相关联的表时出错", zap.Error(err))
+			return ErrCreateArticle
+		}
+
+		if err := tx.Exec("UPDATE tags SET article_count = article_count + 1 WHERE tag_id = ?", v.Id).Error; err != nil {
+			tx.Rollback()
+			zap.L().Debug("更新tag表时出错", zap.Error(err))
+			return ErrCreateArticle
+		}
+	}
+	return tx.Commit().Error
+}
+
+// 根据文章名称查询文章
+func QueryArticleByTitle(title string) (*models.Article, error) {
+	article := new(models.Article)
+	err := Db.Preload("Class").Preload("TagList").Where("title=?", title).Take(article).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return article, err
 }
 
 func QueryArticleById(id int64) (*models.Article, error) {
