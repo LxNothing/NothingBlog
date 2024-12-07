@@ -19,7 +19,7 @@ import (
 // @Param Authorization header string true "Bearer token(jwt)"
 // @Security ApiKeyAuth
 // @Success 200 {object} ResponseData
-// @Router /article/all [get]
+// @Router /articles [get]
 func GetAllArticleHandler(ctx *gin.Context) {
 	aticles, err := logic.GetAllArticle()
 
@@ -38,7 +38,16 @@ func GetAllArticleHandler(ctx *gin.Context) {
 	ResponseSuccess(ctx, aticles)
 }
 
-// 根据文章ID获取文章
+// GetArticleWithIdHandler 通过文章ID查询文章详细信息
+// @Summary 通过文章ID查询文章详细信息的接口
+// @Description 通过该接口可以查询文章详细信息
+// @Tags 文章相关接口
+// @Accept application/json
+// @Produce application/json
+// @Param Authorization header string true "Bearer token(jwt)"
+// @Security ApiKeyAuth
+// @Success 200 {object} ResponseData "code=200表示成功其余失败"
+// @Router /article/:id [get]
 func GetArticleWithIdHandler(ctx *gin.Context) {
 	// 获取参数
 	atcId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
@@ -70,12 +79,12 @@ func GetArticleWithIdHandler(ctx *gin.Context) {
 	ResponseSuccess(ctx, article)
 }
 
-// 根据Tag获取文章
+// 根据Tag获取文章列表
 func GetArticleWithTagHandler(ctx *gin.Context) {
 
 }
 
-// 根据文章分类获取文章
+// 根据文章分类获取文章列表
 func GetArticleWithClassHandler(ctx *gin.Context) {
 
 }
@@ -95,7 +104,17 @@ func GetArticleWithPageHandler(ctx *gin.Context) {
 
 }
 
-// 创建文章
+// CreateArticleHandler 创建文章
+// @Summary 创建文章的接口
+// @Description 通过该接口可以创建文章
+// @Tags 文章相关接口
+// @Accept application/json
+// @Produce application/json
+// @Param Authorization header string true "Bearer token(jwt)"
+// @Param object body models.NewArticleFormsParams true "创建文章的参数"
+// @Security ApiKeyAuth
+// @Success 200 {object} ResponseData "code=200表示成功其余失败"
+// @Router /article [post]
 func CreateArticleHandler(ctx *gin.Context) {
 	newAtcParams := new(models.NewArticleFormsParams)
 	if err := ctx.ShouldBindJSON(newAtcParams); err != nil {
@@ -137,11 +156,16 @@ func CreateArticleHandler(ctx *gin.Context) {
 	ResponseSuccessWithMsg(ctx, "创建文章成功", nil)
 }
 
-// 文章更新
-
-// 更新文章访问量
-
-// 删除单篇文章
+// DeleteMultiArticleHandler 删除单篇文章
+// @Summary 删除单篇文章的接口
+// @Description 通过该接口可以删除指定的文章
+// @Tags 文章相关接口
+// @Accept application/json
+// @Produce application/json
+// @Param Authorization header string true "Bearer token(jwt)"
+// @Security ApiKeyAuth
+// @Success 200 {object} ResponseData "code=200表示成功其余失败"
+// @Router /article/:id [delete]
 func DeleteArticleHandler(ctx *gin.Context) {
 	atcId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
@@ -159,6 +183,17 @@ func DeleteArticleHandler(ctx *gin.Context) {
 	ResponseSuccessWithMsg(ctx, "删除文章成功", nil)
 }
 
+// DeleteMultiArticleHandler 删除多篇文章
+// @Summary 删除多篇文章的接口
+// @Description 通过该接口可以删除指定的文章
+// @Tags 文章相关接口
+// @Accept application/json
+// @Produce application/json
+// @Param Authorization header string true "Bearer token(jwt)"
+// @Param object body models.DeleteMultiArticleParams true "删除文章的参数"
+// @Security ApiKeyAuth
+// @Success 200 {object} ResponseData "code=200表示成功其余失败"
+// @Router /articles [delete]
 func DeleteMultiArticleHandler(ctx *gin.Context) {
 	param := new(models.DeleteMultiArticleParams)
 	if err := ctx.ShouldBindJSON(param); err != nil {
@@ -167,9 +202,61 @@ func DeleteMultiArticleHandler(ctx *gin.Context) {
 		return
 	}
 	if err := logic.DeleteMultiArticleById(param.Ids); err != nil {
-		zap.L().Error("删除文章失败", zap.Error(err))
+		zap.L().Debug("删除文章失败", zap.Error(err))
 		ResponseError(ctx, CodeServerBusy)
 		return
 	}
 	ResponseSuccessWithMsg(ctx, "删除文章成功", nil)
+}
+
+// UpdateArticleHandler 更新文章
+// @Summary 更新文章的接口
+// @Description 通过该接口可以更新指定的文章
+// @Tags 文章相关接口
+// @Accept application/json
+// @Produce application/json
+// @Param Authorization header string true "Bearer token(jwt)"
+// @Param object body models.UpdateArticleFormsParams true "更新文章的参数"
+// @Security ApiKeyAuth
+// @Success 200 {object} ResponseData "code=200表示成功其余失败"
+// @Router /article [put]
+func UpdateArticleHandler(ctx *gin.Context) {
+	updateAtcParams := new(models.UpdateArticleFormsParams)
+	if err := ctx.ShouldBindJSON(updateAtcParams); err != nil {
+		zap.L().Debug("解析更新文章的新参数出错", zap.Error(err))
+		ResponseError(ctx, CodeParameterInvalid)
+		return
+	}
+	uid, err := getCurrentUserId(ctx)
+	if err != nil {
+		zap.L().Debug("获取用户id失败", zap.Error(err))
+		ResponseError(ctx, CodeServerBusy)
+		return
+	}
+
+	article := &models.Article{
+		AuthorId:  uid,
+		ClassId:   updateAtcParams.ClassId,
+		TopFlag:   updateAtcParams.TopFlag,
+		EnComment: updateAtcParams.EnComment,
+		Status:    updateAtcParams.Status,
+		Privilege: updateAtcParams.Privilege,
+		Title:     updateAtcParams.Title,
+		Content:   updateAtcParams.Content,
+		Summary:   updateAtcParams.Summary,
+		Image:     updateAtcParams.Image,
+	}
+
+	// 调用logic层的方法更新文章
+	if err := logic.UpdateArticle(updateAtcParams.ArticleId, article, updateAtcParams.TagIdList); err != nil {
+		zap.L().Debug("更新文章失败", zap.Error(err))
+		if errors.Is(err, logic.ErrArticleNameExisted) {
+			ResponseError(ctx, CodeArticleTitleExisted)
+			return
+		}
+		ResponseError(ctx, CodeServerBusy)
+		return
+	}
+
+	ResponseSuccessWithMsg(ctx, "更新文章成功", nil)
 }
