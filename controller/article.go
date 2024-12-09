@@ -122,12 +122,13 @@ func CreateArticleHandler(ctx *gin.Context) {
 		ResponseError(ctx, CodeParameterInvalid)
 		return
 	}
-	uid, err := getCurrentUserId(ctx)
-	if err != nil {
-		zap.L().Error("获取用户id失败", zap.Error(err))
-		ResponseError(ctx, CodeServerBusy)
-		return
-	}
+	// uid, err := getCurrentUserId(ctx)
+	// if err != nil {
+	// 	zap.L().Error("获取用户id失败", zap.Error(err))
+	// 	ResponseError(ctx, CodeNeedReLogin)
+	// 	return
+	// }
+	uid := int64(4027674162892800) //for test
 
 	article := &models.Article{
 		AuthorId:  uid,

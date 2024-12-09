@@ -219,7 +219,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "通过该接口可以删除指定的文章",
+                "description": "通过该接口可以删除指定的文章 - 软删除",
                 "consumes": [
                     "application/json"
                 ],
@@ -229,7 +229,7 @@ const docTemplate = `{
                 "tags": [
                     "文章相关接口"
                 ],
-                "summary": "删除多篇文章的接口",
+                "summary": "删除时,只会更新其状态为删除状态,不会删除数据库中的数据，恢复时将其恢复为指定状态",
                 "parameters": [
                     {
                         "type": "string",
@@ -244,13 +244,13 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.DeleteMultiArticleParams"
+                            "$ref": "#/definitions/models.SoftDeleteArticleParams"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "code=200表示成功其余失败",
+                        "description": "code=200表示成功,其余失败",
                         "schema": {
                             "$ref": "#/definitions/controller.ResponseData"
                         }
@@ -441,6 +441,492 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/class": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以更新类别",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "类别相关接口"
+                ],
+                "summary": "更新类别(Class)的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "更新类别的参数",
+                        "name": "object",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateClassParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code=1000表示成功其余失败",
+                        "schema": {
+                            "$ref": "#/definitions/controller._ResponseNoDataArea"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以创建类别",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "类别相关接口"
+                ],
+                "summary": "创建类别(Class)的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "创建类别的参数",
+                        "name": "object",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ClassCreateFormParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code=1000表示成功其余失败",
+                        "schema": {
+                            "$ref": "#/definitions/controller._ResponseCreateClass"
+                        }
+                    }
+                }
+            }
+        },
+        "/class/:id": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以获得指定ID的类别",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "类别相关接口"
+                ],
+                "summary": "根据类别ID查询类的信息（详细信息）",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code字段为1000表示执行成功，其余表示出错",
+                        "schema": {
+                            "$ref": "#/definitions/controller._ResponseClassDetailList"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以删除类别",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "类别相关接口"
+                ],
+                "summary": "删除类别(Class)的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code=1000表示成功",
+                        "schema": {
+                            "$ref": "#/definitions/controller._ResponseNoDataArea"
+                        }
+                    }
+                }
+            }
+        },
+        "/classes": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以获得当前的所有文章",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "类别相关接口"
+                ],
+                "summary": "获取所有类别（简略信息）的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller._ResponseAllClassesList"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以删除多个类别",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "类别相关接口"
+                ],
+                "summary": "删除多个类别(Class)的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "待删除的class ID列表",
+                        "name": "object",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DeleteMultiTagParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code=1000成功，,返回data域中不为空代表对应的class删除失败",
+                        "schema": {
+                            "$ref": "#/definitions/controller._ResponseDeleteClass"
+                        }
+                    }
+                }
+            }
+        },
+        "/tag": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以更新Tag",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "标签相关接口"
+                ],
+                "summary": "更新标签(Tag)的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "更新标签的参数",
+                        "name": "object",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateTagParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code=1000表示成功其余失败",
+                        "schema": {
+                            "$ref": "#/definitions/controller._ResponseNoDataArea"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以创建标签",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "标签相关接口"
+                ],
+                "summary": "创建标签(tag)的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "创建标签的参数",
+                        "name": "object",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.TagCreateFormParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code=1000表示成功其余失败",
+                        "schema": {
+                            "$ref": "#/definitions/controller._ResponseNoDataArea"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以删除多个Tag",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "标签相关接口"
+                ],
+                "summary": "删除多个标签(Tag)的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "删除多个标签的参数",
+                        "name": "object",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DeleteMultiTagParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code=1000表示成功其余失败",
+                        "schema": {
+                            "$ref": "#/definitions/controller._ResponseNoDataArea"
+                        }
+                    }
+                }
+            }
+        },
+        "/tag/:id": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以获得当前标签的详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "标签相关接口"
+                ],
+                "summary": "根据ID获取标签的详细信息的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller._ResponseTagDetailList"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以删除单个Tag",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "标签相关接口"
+                ],
+                "summary": "删除单个标签(Tag)的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code=1000表示成功其余失败",
+                        "schema": {
+                            "$ref": "#/definitions/controller._ResponseNoDataArea"
+                        }
+                    }
+                }
+            }
+        },
+        "/tags": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以获得当前的所有标签",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "标签相关接口"
+                ],
+                "summary": "获取所有标签（简略信息）的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller._ResponseAllTagList"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -499,6 +985,127 @@ const docTemplate = `{
                 "msg": {}
             }
         },
+        "controller._ResponseAllClassesList": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "$ref": "#/definitions/controller.ResponseCodeType"
+                },
+                "data": {
+                    "description": "` + "`" + `json:\"data,omitempty\"` + "`" + ` //omitempty 该字段为空时忽略",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ResponseClassBrief"
+                    }
+                },
+                "msg": {}
+            }
+        },
+        "controller._ResponseAllTagList": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "$ref": "#/definitions/controller.ResponseCodeType"
+                },
+                "data": {
+                    "description": "` + "`" + `json:\"data,omitempty\"` + "`" + ` //omitempty 该字段为空时忽略",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ResponseTagBrief"
+                    }
+                },
+                "msg": {}
+            }
+        },
+        "controller._ResponseClassDetailList": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "$ref": "#/definitions/controller.ResponseCodeType"
+                },
+                "data": {
+                    "description": "` + "`" + `json:\"data,omitempty\"` + "`" + ` //omitempty 该字段为空时忽略",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.ResponseClassDetail"
+                        }
+                    ]
+                },
+                "msg": {}
+            }
+        },
+        "controller._ResponseCreateClass": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "$ref": "#/definitions/controller.ResponseCodeType"
+                },
+                "data": {
+                    "description": "` + "`" + `json:\"data,omitempty\"` + "`" + ` //omitempty 该字段为空时忽略",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.ResponseClassBrief"
+                        }
+                    ]
+                },
+                "msg": {}
+            }
+        },
+        "controller._ResponseDeleteClass": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "$ref": "#/definitions/controller.ResponseCodeType"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "msg": {}
+            }
+        },
+        "controller._ResponseNoDataArea": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "$ref": "#/definitions/controller.ResponseCodeType"
+                },
+                "msg": {}
+            }
+        },
+        "controller._ResponseTagDetailList": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "$ref": "#/definitions/controller.ResponseCodeType"
+                },
+                "data": {
+                    "description": "` + "`" + `json:\"data,omitempty\"` + "`" + ` //omitempty 该字段为空时忽略",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.ResponseTagDetail"
+                        }
+                    ]
+                },
+                "msg": {}
+            }
+        },
+        "models.ClassCreateFormParams": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "desc": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "models.DeleteMultiArticleParams": {
             "type": "object",
             "required": [
@@ -507,6 +1114,21 @@ const docTemplate = `{
             "properties": {
                 "ids": {
                     "description": "待删除的文章ID列表",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "models.DeleteMultiTagParams": {
+            "type": "object",
+            "required": [
+                "ids"
+            ],
+            "properties": {
+                "ids": {
+                    "description": "待删除的TagID列表",
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -665,6 +1287,102 @@ const docTemplate = `{
                 }
             }
         },
+        "models.ResponseClassBrief": {
+            "type": "object",
+            "properties": {
+                "atc_count": {
+                    "description": "该分类下包含的文章数量",
+                    "type": "integer"
+                },
+                "class_id": {
+                    "description": "类别ID - 由应用层生成",
+                    "type": "string",
+                    "example": "0"
+                },
+                "name": {
+                    "description": "类别名称",
+                    "type": "string"
+                }
+            }
+        },
+        "models.ResponseClassDetail": {
+            "type": "object",
+            "properties": {
+                "atc_count": {
+                    "description": "该分类下包含的文章数量",
+                    "type": "integer"
+                },
+                "class_id": {
+                    "description": "类别ID - 由应用层生成",
+                    "type": "string",
+                    "example": "0"
+                },
+                "created_at": {
+                    "description": "创建时间",
+                    "type": "string"
+                },
+                "desc": {
+                    "description": "类别的描述信息",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "类别名称",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "description": "更新时间",
+                    "type": "string"
+                }
+            }
+        },
+        "models.ResponseTagBrief": {
+            "type": "object",
+            "properties": {
+                "atc_count": {
+                    "description": "该标签下包含的文章数量",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "类别名称",
+                    "type": "string"
+                },
+                "tag_id": {
+                    "description": "标签ID - 由应用层生成",
+                    "type": "string",
+                    "example": "0"
+                }
+            }
+        },
+        "models.ResponseTagDetail": {
+            "type": "object",
+            "properties": {
+                "atc_count": {
+                    "description": "该标签下包含的文章数量",
+                    "type": "integer"
+                },
+                "created_at": {
+                    "description": "创建时间",
+                    "type": "string"
+                },
+                "desc": {
+                    "description": "标签的描述信息",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "类别名称",
+                    "type": "string"
+                },
+                "tag_id": {
+                    "description": "标签ID - 由应用层生成",
+                    "type": "string",
+                    "example": "0"
+                },
+                "updated_at": {
+                    "description": "更新时间",
+                    "type": "string"
+                }
+            }
+        },
         "models.SignUpParams": {
             "type": "object",
             "required": [
@@ -700,6 +1418,26 @@ const docTemplate = `{
                 }
             }
         },
+        "models.SoftDeleteArticleParams": {
+            "type": "object",
+            "required": [
+                "del_flag",
+                "ids"
+            ],
+            "properties": {
+                "del_flag": {
+                    "description": "true - 删除  false - 恢复",
+                    "type": "boolean"
+                },
+                "ids": {
+                    "description": "待删除的文章ID列表",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
         "models.StatusType": {
             "type": "integer",
             "enum": [
@@ -720,6 +1458,20 @@ const docTemplate = `{
                 "StatusDelete",
                 "StatusAll"
             ]
+        },
+        "models.TagCreateFormParams": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "desc": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
         },
         "models.TagFormsParams": {
             "type": "object",
@@ -798,6 +1550,44 @@ const docTemplate = `{
                 "top_flag": {
                     "description": "是否置顶标志 false-没有置顶 true-置顶",
                     "type": "boolean"
+                }
+            }
+        },
+        "models.UpdateClassParams": {
+            "type": "object",
+            "required": [
+                "class_id",
+                "name"
+            ],
+            "properties": {
+                "class_id": {
+                    "type": "string",
+                    "example": "0"
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UpdateTagParams": {
+            "type": "object",
+            "required": [
+                "name",
+                "tag_id"
+            ],
+            "properties": {
+                "desc": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "tag_id": {
+                    "type": "string",
+                    "example": "0"
                 }
             }
         },

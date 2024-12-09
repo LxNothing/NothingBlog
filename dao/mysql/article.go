@@ -257,13 +257,12 @@ func QueryArticleByClass(classId int64) ([]models.Article, error) {
 	return articles, nil
 }
 
-func QueryAticleNumberByClass(classId []int64) (int64, error) {
+func QueryArticleNumberWithClass(classId int64) (int64, error) {
 	var counter int64
-	if err := Db.Model(&models.Article{}).Where("class_id in (?)", classId).Count(&counter).Error; err != nil {
+	if err := Db.Model(&models.Article{}).Where("class_id = ?", classId).Count(&counter).Error; err != nil {
 		zap.L().Debug("通过class id查询文章出错", zap.Error(err))
 		return -1, ErrQueryArticle
 	}
-
 	return counter, nil
 }
 

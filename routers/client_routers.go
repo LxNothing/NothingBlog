@@ -30,6 +30,6 @@ func ClientSetUp(basePath string, eng *gin.Engine) {
 		// router.GET("/classes/:id", nil)
 		// router.GET("/classes/:id/atc/:page", nil)
 
-		router.GET("/category", controller.GetAllClassHandler) // 等价于 /category?class=all&tag=all"
+		router.GET("/category", controller.GetAllClassClientHandler) // 等价于 /category?class=all&tag=all"
 	}
 }

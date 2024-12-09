@@ -78,4 +78,17 @@ func AdminSetUp(basePath string, eng *gin.Engine) {
 		// 更新class
 		tagRouter.PUT("/class", controller.UpdateClassHandler)
 	}
+
+	// 文件相关路由
+	fileRouter := eng.Group(basePath)
+	{
+		//classRouter.Use(middleware.JwtAuthorization())
+		fileRouter.POST("/upload", controller.FileUploadHandler)
+	}
+
+	// 评论相关路由
+	// commentRouter := eng.Group(basePath)
+	// {
+
+	// }
 }

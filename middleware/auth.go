@@ -36,7 +36,6 @@ func JwtAuthorization() func(ctx *gin.Context) {
 			ctx.Abort()
 			return
 		}
-
 		// 获取redis中的token和认证信息中的token进行对比，实现单用户单点登录
 		tk, err := redis.QueryTokenByUserId(sc.UserId)
 		if err != nil || tk != ps[1] {

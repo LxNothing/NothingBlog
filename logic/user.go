@@ -6,15 +6,13 @@ import (
 	"NothingBlog/models"
 	"NothingBlog/package/jwt"
 	"NothingBlog/package/snowflake"
+	"NothingBlog/package/utils"
 	"NothingBlog/package/verifycode"
-	"crypto/md5"
-	"encoding/hex"
 	"errors"
 
 	"go.uber.org/zap"
 )
 
-const secret = "xl_ngblog"      // md5加密时使用的密钥
 const default_pwd = "go_ngblog" // 重置后的默认密码
 
 var ErrUserPassword = errors.New("用户密码不正确")
@@ -48,7 +46,7 @@ func UserSignup(u *models.SignUpParams) (err error) {
 	nu.UserId = snowflake.GetNextId().Int64()
 
 	// 用户密码加密
-	nu.Password = EncryptContent(u.Password)
+	nu.Password = utils.EncryptContent(u.Password)
 
 	// 持久化存储 - mysql
 	return mysql.InsertUser(nu)
@@ -70,15 +68,15 @@ func UserLogin(u *models.LoginParams) (token string, err error) {
 	}
 
 	// 检查密码是否匹配
-	if EncryptContent(u.Password) != usr.Password {
+	if utils.EncryptContent(u.Password) != usr.Password {
 		return "", ErrUserPassword
 	}
 
 	// 检查验证码是否匹配 - 测试方便，先注释掉
-	// ok := verifycode.CheckVerifyCode(u.VerifyCode.Id, u.VerifyCode.Code)
-	// if !ok {
-	// 	return "", ErrVerifyCode
-	// }
+	ok := verifycode.CheckVerifyCode(u.VerifyCode.Id, u.VerifyCode.Code)
+	if !ok {
+		return "", ErrVerifyCode
+	}
 
 	// 生成token - 这里生成的是access token，jwt token存在的问题是服务端在签发后无法控制token的有效性
 	// 只能因为到期而失效，所以为了尽可能缓解这个问题，一般将这个token的有效期设置的很短，然后再引入一个不含任何自定义
@@ -93,13 +91,6 @@ func UserLogin(u *models.LoginParams) (token string, err error) {
 
 	// 验证成功
 	return token, nil
-}
-
-// 使用md5算法对内容加密
-func EncryptContent(str string) string {
-	ecy := md5.New()
-	ecy.Write([]byte(secret))
-	return hex.EncodeToString(ecy.Sum([]byte(str)))
 }
 
 // 修改用户密码
@@ -125,12 +116,12 @@ func ModifyPassword(p *models.ModifyPasswordParams) (err error) {
 	}
 
 	// 验证旧密码是否正确
-	if EncryptContent(p.OldPassword) != usr.Password {
+	if utils.EncryptContent(p.OldPassword) != usr.Password {
 		return ErrUserPassword
 	}
 
 	// 更新用户密码
-	return mysql.SetUserPassword(p.UserName, EncryptContent(p.NewPassword))
+	return mysql.SetUserPassword(p.UserName, utils.EncryptContent(p.NewPassword))
 }
 
 func ResetPassword(p *models.ResetPasswordParams) (err error) {
@@ -172,5 +163,5 @@ func ResetPassword(p *models.ResetPasswordParams) (err error) {
 	redis.CatchVerifyCode(strconv.FormatInt(usr.UserId, 10), code, time.Minute*5)*/
 
 	// 重置用户密码为 go_ngblog
-	return mysql.SetUserPassword(p.UserName, EncryptContent(default_pwd))
+	return mysql.SetUserPassword(p.UserName, utils.EncryptContent(default_pwd))
 }

@@ -12,6 +12,16 @@ import (
 	"go.uber.org/zap"
 )
 
+// GetAllClassesHandler 获取所有的类别
+// @Summary 获取所有类别（简略信息）的接口
+// @Description 通过该接口可以获得当前的所有文章
+// @Tags 类别相关接口
+// @Accept application/json
+// @Produce application/json
+// @Param Authorization header string true "Bearer token(jwt)"
+// @Security ApiKeyAuth
+// @Success 200 {object} _ResponseAllClassesList
+// @Router /classes [get]
 func GetAllClassesHandler(ctx *gin.Context) {
 	cls, err := logic.GetAllClasses()
 	if err != nil {
@@ -23,6 +33,16 @@ func GetAllClassesHandler(ctx *gin.Context) {
 	ResponseSuccess(ctx, cls)
 }
 
+// GetClassByIdHandler 根据类别ID查询类的信息
+// @Summary 根据类别ID查询类的信息（详细信息）
+// @Description 通过该接口可以获得指定ID的类别
+// @Tags 类别相关接口
+// @Accept application/json
+// @Produce application/json
+// @Param Authorization header string true "Bearer token(jwt)"
+// @Security ApiKeyAuth
+// @Success 200 {object} _ResponseClassDetailList "code字段为1000表示执行成功，其余表示出错"
+// @Router /class/:id [get]
 func GetClassByIdHandler(ctx *gin.Context) {
 	idstr := ctx.Param("id")
 	id, err := strconv.ParseInt(idstr, 10, 64)
@@ -42,9 +62,22 @@ func GetClassByIdHandler(ctx *gin.Context) {
 	ResponseSuccess(ctx, cls)
 }
 
+// CreateClassHandler 创建class
+// @Summary 创建类别(Class)的接口
+// @Description 通过该接口可以创建类别
+// @Tags 类别相关接口
+// @Accept application/json
+// @Produce application/json
+// @Param Authorization header string true "Bearer token(jwt)"
+// @Param object body models.ClassCreateFormParams true "创建类别的参数"
+// @Security ApiKeyAuth
+// @Success 200 {object} _ResponseCreateClass "code=1000表示成功其余失败"
+// @Router /class [post]
 func CreateClassHandler(ctx *gin.Context) {
+	var clsId int64
+	var err error
 	classParam := new(models.ClassCreateFormParams)
-	if err := ctx.ShouldBindJSON(classParam); err != nil {
+	if err = ctx.ShouldBindJSON(classParam); err != nil {
 		zap.L().Debug("解析创建Tag的参数失败", zap.Error(err))
 		ResponseError(ctx, CodeParameterInvalid)
 		return
@@ -54,23 +87,21 @@ func CreateClassHandler(ctx *gin.Context) {
 	cls.Name = classParam.Name
 	cls.Desc = classParam.Desc
 
-	if err := logic.CreateNewClass(cls); err != nil {
+	if clsId, err = logic.CreateNewClass(cls); err != nil {
 		zap.L().Debug("创建Tag失败", zap.Error(err))
 		ResponseError(ctx, CodeServerBusy)
 		return
 	}
-	ResponseSuccessWithMsg(ctx, "创建Class成功", nil)
+
+	ResponseSuccess(ctx, models.ResponseClassBrief{
+		ClassId:  clsId,
+		Name:     cls.Name,
+		AtcCount: 0,
+	})
 }
 
-type category struct {
-	CurClassName string
-	CurTagName   string
-	AllClasses   []models.ClassBriefReturn
-	CurTagList   []models.TagBriefReturn
-}
-
-// category?class=all
-func GetAllClassHandler(ctx *gin.Context) {
+// category?class=all 这个接口是供客户端使用的，不需要进行jwt认证
+func GetAllClassClientHandler(ctx *gin.Context) {
 	var clsId int64
 	var tagId int64
 	var page int = 1
@@ -90,19 +121,19 @@ func GetAllClassHandler(ctx *gin.Context) {
 	if pageStr != "" {
 		pg, err := strconv.ParseInt(pageStr, 10, 64)
 		if err != nil {
-			zap.L().Debug("页号传递错误，解析失败")
+			zap.L().Debug("页号传递错误，解析失败", zap.Error(err))
 			ResponseError(ctx, CodeParameterInvalid)
 			return
 		}
 		page = int(pg)
 	}
 
-	// 判断class是否已经存在
+	// 如果客户端指定了class，则判断class是否已经存在
 	if clsStr != "all" {
 		cls, _ := logic.GetClassByName(clsStr) // 查询对应的class是否存在
 		if cls == nil {
 			zap.L().Debug("传递的查询文章种类参数错误")
-			ResponseError(ctx, CodeParameterInvalid)
+			ResponseErrorWithMsg(ctx, CodeParameterInvalid, "class名错误")
 			return
 		}
 		clsId = cls.ClassId
@@ -113,7 +144,7 @@ func GetAllClassHandler(ctx *gin.Context) {
 		tag, _ := logic.GetTagByName(tagStr) // 查询对应的class是否存在
 		if tag == nil {
 			zap.L().Debug("传递的查询tag种类参数错误")
-			ResponseError(ctx, CodeParameterInvalid)
+			ResponseErrorWithMsg(ctx, CodeParameterInvalid, "tag名错误")
 			return
 		}
 		tagId = tag.TagId
@@ -126,44 +157,38 @@ func GetAllClassHandler(ctx *gin.Context) {
 		ResponseError(ctx, CodeServerBusy)
 		return
 	}
-	category := &category{
+	category := &models.ResponseClassAllForClient{
 		CurClassName: clsStr,
 		CurTagName:   tagStr,
-		AllClasses:   make([]models.ClassBriefReturn, 0, len(classes)),
+		BriefClasses: make([]models.ResponseClassBrief, len(classes)),
 	}
-	for _, class := range classes {
-		category.AllClasses = append(category.AllClasses, models.ClassBriefReturn{
+	for idx, class := range classes {
+		category.BriefClasses[idx] = models.ResponseClassBrief{
 			ClassId:  class.ClassId,
 			AtcCount: class.AtcCount,
 			Name:     class.Name,
-		})
+		}
 	}
 
 	// 根据class名称，获取对应章的所有tag
-	var tags []models.Tag
+	var tags []models.ResponseTagBrief
 	if clsStr == "all" {
-		tags, _ = logic.GetAllTags()
+		tags, _ = logic.GetAllTags() // class = all, 则获取所有的tag信息
 	} else {
-		cls, err := logic.GetClassByName(clsStr)
-		if err != nil {
-			zap.L().Debug("查询class ID失败", zap.Error(err))
-			ResponseError(ctx, CodeServerBusy)
-			return
-		}
-
-		tags, err = logic.GetTagByClassId(cls.ClassId)
+		// class != all, 则获取该类别下的所有文章的不重复tag
+		tags, err = logic.GetTagByClassId(clsId)
 		if err != nil {
 			zap.L().Debug("查询tag失败", zap.Error(err))
 			ResponseError(ctx, CodeServerBusy)
 			return
 		}
 	}
-	category.CurTagList = make([]models.TagBriefReturn, 0, len(tags))
+	category.CurTagList = make([]models.ResponseTagBrief, 0, len(tags))
 	for _, tag := range tags {
-		category.CurTagList = append(category.CurTagList, models.TagBriefReturn{
-			TagId:        tag.TagId,
-			Name:         tag.Name,
-			ArticleCount: tag.ArticleCount,
+		category.CurTagList = append(category.CurTagList, models.ResponseTagBrief{
+			TagId:    tag.TagId,
+			Name:     tag.Name,
+			AtcCount: tag.AtcCount,
 		})
 	}
 
@@ -211,17 +236,28 @@ func GetAllClassHandler(ctx *gin.Context) {
 	})
 }
 
+// DeleteClassHandler 删除class
+// @Summary 删除类别(Class)的接口
+// @Description 通过该接口可以删除类别
+// @Tags 类别相关接口
+// @Accept application/json
+// @Produce application/json
+// @Param Authorization header string true "Bearer token(jwt)"
+// @Security ApiKeyAuth
+// @Success 200 {object} _ResponseNoDataArea "code=1000表示成功"
+// @Router /class/:id [delete]
 func DeleteClassHandler(ctx *gin.Context) {
 	clsId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		zap.L().Debug("Class的ID参数传递错误", zap.Error(err))
-		ResponseError(ctx, CodeParameterInvalid)
+		ResponseErrorWithMsg(ctx, CodeParameterInvalid, "class id指定错误")
 		return
 	}
 
-	err = logic.DeleteClassById(clsId)
+	// 类别下存在文章则不允许删除
+	err = logic.DeleteOneClassById(clsId)
 	if err != nil {
-		zap.L().Error("删除Class失败", zap.Error(err))
+		zap.L().Debug("删除Class失败", zap.Error(err))
 		if errors.Is(err, logic.ErrDeleteClassByIds) {
 			ResponseError(ctx, CodeHaveArticleInClass)
 			return
@@ -232,6 +268,17 @@ func DeleteClassHandler(ctx *gin.Context) {
 	ResponseSuccessWithMsg(ctx, "删除Class成功", nil)
 }
 
+// DeleteMultiClassHandler 删除多个class
+// @Summary 删除多个类别(Class)的接口
+// @Description 通过该接口可以删除多个类别
+// @Tags 类别相关接口
+// @Accept application/json
+// @Produce application/json
+// @Param Authorization header string true "Bearer token(jwt)"
+// @Param object body models.DeleteMultiTagParams true "待删除的class ID列表"
+// @Security ApiKeyAuth
+// @Success 200 {object} _ResponseDeleteClass "code=1000成功，,返回data域中不为空代表对应的class删除失败"
+// @Router /classes [delete]
 func DeleteMultiClassHandler(ctx *gin.Context) {
 	param := new(models.DeleteMultiTagParams)
 	if err := ctx.ShouldBindJSON(param); err != nil {
@@ -239,19 +286,35 @@ func DeleteMultiClassHandler(ctx *gin.Context) {
 		ResponseError(ctx, CodeParameterInvalid)
 		return
 	}
-	if err := logic.DeleteMultiClassById(param.Ids); err != nil {
+
+	ids, err := logic.DeleteMultiClassById(param.Ids)
+	if err != nil {
 		zap.L().Error("删除Class失败", zap.Error(err))
 		if errors.Is(err, logic.ErrDeleteClassByIds) {
-			ResponseError(ctx, CodeHaveArticleInClass)
+			ResponseErrorWithDataMsg(ctx, CodeHaveArticleInClass, "类别下存在文章不允许删除", ids)
 			return
 		}
 
-		ResponseError(ctx, CodeServerBusy)
+		ResponseErrorWithDataMsg(ctx, CodeServerBusy, "服务器繁忙，删除失败", ids)
 		return
 	}
-	ResponseSuccessWithMsg(ctx, "删除Class成功", nil)
+	if len(ids) == 0 {
+		ids = nil
+	}
+	ResponseSuccessWithMsg(ctx, "删除Class成功", ids)
 }
 
+// UpdateClassHandler 更新class
+// @Summary 更新类别(Class)的接口
+// @Description 通过该接口可以更新类别
+// @Tags 类别相关接口
+// @Accept application/json
+// @Produce application/json
+// @Param Authorization header string true "Bearer token(jwt)"
+// @Param object body models.UpdateClassParams true "更新类别的参数"
+// @Security ApiKeyAuth
+// @Success 200 {object} _ResponseNoDataArea "code=1000表示成功其余失败"
+// @Router /class [put]
 func UpdateClassHandler(ctx *gin.Context) {
 	newClass := new(models.UpdateClassParams)
 

@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -14,15 +12,8 @@ type Class struct {
 	Desc     string `json:"desc" gorm:"type:varchar(256)"`
 }
 
-type ClassBriefReturn struct {
-	ClassId  int64  `json:"class_id,string"` // 类别ID - 由应用层生成
-	AtcCount int32  `json:"atc_count"`       // 该分类下包含的文章数量
-	Name     string `json:"name"`
-}
-
-type ClassEntireReturn struct {
-	ClassBriefReturn
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Desc      string    `json:"desc"`
-}
+// type ClassBriefReturn struct {
+// 	ClassId  int64  `json:"class_id,string"` // 类别ID - 由应用层生成
+// 	AtcCount int32  `json:"atc_count"`       // 该分类下包含的文章数量
+// 	Name     string `json:"name"`
+// }

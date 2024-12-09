@@ -34,7 +34,7 @@ type Article struct {
 	Privilege    PrivilegeType `gorm:"type:int;not bull;default:0" json:"privilege"`                                                                              // 文章权限 0-公开 1-私有
 	Title        string        `gorm:"type:varchar(255);not null;unique" json:"title"`                                                                            // 文章标题,不允许重复
 	Summary      string        `gorm:"type:varchar(255);" json:"summary"`                                                                                         // 文章的摘要信息
-	Image        string        `gorm:"type:varchar(255);" json:"image"`                                                                                           // 文章缩略图
+	Image        string        `gorm:"type:varchar(255);" json:"image"`                                                                                           // 文章缩略图，应该存储一个URL
 	Content      string        `gorm:"type:MediumText;" json:"content"`                                                                                           // 文章内容
 	CommentCount uint32        `gorm:"type:int;default:0;" json:"comment_count"`                                                                                  // 文章的评论数
 	VisitCount   uint32        `gorm:"type:int;default:0;" json:"visit_count"`                                                                                    // 文章的浏览量

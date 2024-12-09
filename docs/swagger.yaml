@@ -1,4 +1,72 @@
 definitions:
+  controller._ResponseAllClassesList:
+    properties:
+      code:
+        $ref: '#/definitions/controller.ResponseCodeType'
+      data:
+        description: '`json:"data,omitempty"` //omitempty 该字段为空时忽略'
+        items:
+          $ref: '#/definitions/models.ResponseClassBrief'
+        type: array
+      msg: {}
+    type: object
+  controller._ResponseAllTagList:
+    properties:
+      code:
+        $ref: '#/definitions/controller.ResponseCodeType'
+      data:
+        description: '`json:"data,omitempty"` //omitempty 该字段为空时忽略'
+        items:
+          $ref: '#/definitions/models.ResponseTagBrief'
+        type: array
+      msg: {}
+    type: object
+  controller._ResponseClassDetailList:
+    properties:
+      code:
+        $ref: '#/definitions/controller.ResponseCodeType'
+      data:
+        allOf:
+        - $ref: '#/definitions/models.ResponseClassDetail'
+        description: '`json:"data,omitempty"` //omitempty 该字段为空时忽略'
+      msg: {}
+    type: object
+  controller._ResponseCreateClass:
+    properties:
+      code:
+        $ref: '#/definitions/controller.ResponseCodeType'
+      data:
+        allOf:
+        - $ref: '#/definitions/models.ResponseClassBrief'
+        description: '`json:"data,omitempty"` //omitempty 该字段为空时忽略'
+      msg: {}
+    type: object
+  controller._ResponseDeleteClass:
+    properties:
+      code:
+        $ref: '#/definitions/controller.ResponseCodeType'
+      data:
+        items:
+          type: integer
+        type: array
+      msg: {}
+    type: object
+  controller._ResponseNoDataArea:
+    properties:
+      code:
+        $ref: '#/definitions/controller.ResponseCodeType'
+      msg: {}
+    type: object
+  controller._ResponseTagDetailList:
+    properties:
+      code:
+        $ref: '#/definitions/controller.ResponseCodeType'
+      data:
+        allOf:
+        - $ref: '#/definitions/models.ResponseTagDetail'
+        description: '`json:"data,omitempty"` //omitempty 该字段为空时忽略'
+      msg: {}
+    type: object
   controller.ResponseCodeType:
     enum:
     - 1000
@@ -47,10 +115,29 @@ definitions:
         description: omitempty 该字段为空时忽略
       msg: {}
     type: object
+  models.ClassCreateFormParams:
+    properties:
+      desc:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
   models.DeleteMultiArticleParams:
     properties:
       ids:
         description: 待删除的文章ID列表
+        items:
+          type: integer
+        type: array
+    required:
+    - ids
+    type: object
+  models.DeleteMultiTagParams:
+    properties:
+      ids:
+        description: 待删除的TagID列表
         items:
           type: integer
         type: array
@@ -160,6 +247,76 @@ definitions:
     required:
     - username
     type: object
+  models.ResponseClassBrief:
+    properties:
+      atc_count:
+        description: 该分类下包含的文章数量
+        type: integer
+      class_id:
+        description: 类别ID - 由应用层生成
+        example: "0"
+        type: string
+      name:
+        description: 类别名称
+        type: string
+    type: object
+  models.ResponseClassDetail:
+    properties:
+      atc_count:
+        description: 该分类下包含的文章数量
+        type: integer
+      class_id:
+        description: 类别ID - 由应用层生成
+        example: "0"
+        type: string
+      created_at:
+        description: 创建时间
+        type: string
+      desc:
+        description: 类别的描述信息
+        type: string
+      name:
+        description: 类别名称
+        type: string
+      updated_at:
+        description: 更新时间
+        type: string
+    type: object
+  models.ResponseTagBrief:
+    properties:
+      atc_count:
+        description: 该标签下包含的文章数量
+        type: integer
+      name:
+        description: 类别名称
+        type: string
+      tag_id:
+        description: 标签ID - 由应用层生成
+        example: "0"
+        type: string
+    type: object
+  models.ResponseTagDetail:
+    properties:
+      atc_count:
+        description: 该标签下包含的文章数量
+        type: integer
+      created_at:
+        description: 创建时间
+        type: string
+      desc:
+        description: 标签的描述信息
+        type: string
+      name:
+        description: 类别名称
+        type: string
+      tag_id:
+        description: 标签ID - 由应用层生成
+        example: "0"
+        type: string
+      updated_at:
+        description: 更新时间
+        type: string
+    type: object
   models.SignUpParams:
     properties:
       email:
@@ -184,6 +341,20 @@ definitions:
     - username
     - verify_code
     type: object
+  models.SoftDeleteArticleParams:
+    properties:
+      del_flag:
+        description: true - 删除  false - 恢复
+        type: boolean
+      ids:
+        description: 待删除的文章ID列表
+        items:
+          type: integer
+        type: array
+    required:
+    - del_flag
+    - ids
+    type: object
   models.StatusType:
     enum:
     - 0
@@ -201,6 +372,15 @@ definitions:
     - StatusCommit
     - StatusDelete
     - StatusAll
+  models.TagCreateFormParams:
+    properties:
+      desc:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
   models.TagFormsParams:
     properties:
       id:
@@ -255,6 +435,32 @@ definitions:
     - class_id
     - content
     - title
+    type: object
+  models.UpdateClassParams:
+    properties:
+      class_id:
+        example: "0"
+        type: string
+      desc:
+        type: string
+      name:
+        type: string
+    required:
+    - class_id
+    - name
+    type: object
+  models.UpdateTagParams:
+    properties:
+      desc:
+        type: string
+      name:
+        type: string
+      tag_id:
+        example: "0"
+        type: string
+    required:
+    - name
+    - tag_id
     type: object
   models.VerifyCodeParams:
     properties:
@@ -379,7 +585,7 @@ paths:
     delete:
       consumes:
       - application/json
-      description: 通过该接口可以删除指定的文章
+      description: 通过该接口可以删除指定的文章 - 软删除
       parameters:
       - description: Bearer token(jwt)
         in: header
@@ -391,17 +597,17 @@ paths:
         name: object
         required: true
         schema:
-          $ref: '#/definitions/models.DeleteMultiArticleParams'
+          $ref: '#/definitions/models.SoftDeleteArticleParams'
       produces:
       - application/json
       responses:
         "200":
-          description: code=200表示成功其余失败
+          description: code=200表示成功,其余失败
           schema:
             $ref: '#/definitions/controller.ResponseData'
       security:
       - ApiKeyAuth: []
-      summary: 删除多篇文章的接口
+      summary: 删除时,只会更新其状态为删除状态,不会删除数据库中的数据，恢复时将其恢复为指定状态
       tags:
       - 文章相关接口
     get:
@@ -539,4 +745,310 @@ paths:
       summary: 获取数字验证码的接口
       tags:
       - 认证相关接口
+  /class:
+    post:
+      consumes:
+      - application/json
+      description: 通过该接口可以创建类别
+      parameters:
+      - description: Bearer token(jwt)
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 创建类别的参数
+        in: body
+        name: object
+        required: true
+        schema:
+          $ref: '#/definitions/models.ClassCreateFormParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code=1000表示成功其余失败
+          schema:
+            $ref: '#/definitions/controller._ResponseCreateClass'
+      security:
+      - ApiKeyAuth: []
+      summary: 创建类别(Class)的接口
+      tags:
+      - 类别相关接口
+    put:
+      consumes:
+      - application/json
+      description: 通过该接口可以更新类别
+      parameters:
+      - description: Bearer token(jwt)
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 更新类别的参数
+        in: body
+        name: object
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateClassParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code=1000表示成功其余失败
+          schema:
+            $ref: '#/definitions/controller._ResponseNoDataArea'
+      security:
+      - ApiKeyAuth: []
+      summary: 更新类别(Class)的接口
+      tags:
+      - 类别相关接口
+  /class/:id:
+    delete:
+      consumes:
+      - application/json
+      description: 通过该接口可以删除类别
+      parameters:
+      - description: Bearer token(jwt)
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code=1000表示成功
+          schema:
+            $ref: '#/definitions/controller._ResponseNoDataArea'
+      security:
+      - ApiKeyAuth: []
+      summary: 删除类别(Class)的接口
+      tags:
+      - 类别相关接口
+    get:
+      consumes:
+      - application/json
+      description: 通过该接口可以获得指定ID的类别
+      parameters:
+      - description: Bearer token(jwt)
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code字段为1000表示执行成功，其余表示出错
+          schema:
+            $ref: '#/definitions/controller._ResponseClassDetailList'
+      security:
+      - ApiKeyAuth: []
+      summary: 根据类别ID查询类的信息（详细信息）
+      tags:
+      - 类别相关接口
+  /classes:
+    delete:
+      consumes:
+      - application/json
+      description: 通过该接口可以删除多个类别
+      parameters:
+      - description: Bearer token(jwt)
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 待删除的class ID列表
+        in: body
+        name: object
+        required: true
+        schema:
+          $ref: '#/definitions/models.DeleteMultiTagParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code=1000成功，,返回data域中不为空代表对应的class删除失败
+          schema:
+            $ref: '#/definitions/controller._ResponseDeleteClass'
+      security:
+      - ApiKeyAuth: []
+      summary: 删除多个类别(Class)的接口
+      tags:
+      - 类别相关接口
+    get:
+      consumes:
+      - application/json
+      description: 通过该接口可以获得当前的所有文章
+      parameters:
+      - description: Bearer token(jwt)
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller._ResponseAllClassesList'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取所有类别（简略信息）的接口
+      tags:
+      - 类别相关接口
+  /tag:
+    delete:
+      consumes:
+      - application/json
+      description: 通过该接口可以删除多个Tag
+      parameters:
+      - description: Bearer token(jwt)
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 删除多个标签的参数
+        in: body
+        name: object
+        required: true
+        schema:
+          $ref: '#/definitions/models.DeleteMultiTagParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code=1000表示成功其余失败
+          schema:
+            $ref: '#/definitions/controller._ResponseNoDataArea'
+      security:
+      - ApiKeyAuth: []
+      summary: 删除多个标签(Tag)的接口
+      tags:
+      - 标签相关接口
+    post:
+      consumes:
+      - application/json
+      description: 通过该接口可以创建标签
+      parameters:
+      - description: Bearer token(jwt)
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 创建标签的参数
+        in: body
+        name: object
+        required: true
+        schema:
+          $ref: '#/definitions/models.TagCreateFormParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code=1000表示成功其余失败
+          schema:
+            $ref: '#/definitions/controller._ResponseNoDataArea'
+      security:
+      - ApiKeyAuth: []
+      summary: 创建标签(tag)的接口
+      tags:
+      - 标签相关接口
+    put:
+      consumes:
+      - application/json
+      description: 通过该接口可以更新Tag
+      parameters:
+      - description: Bearer token(jwt)
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 更新标签的参数
+        in: body
+        name: object
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateTagParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code=1000表示成功其余失败
+          schema:
+            $ref: '#/definitions/controller._ResponseNoDataArea'
+      security:
+      - ApiKeyAuth: []
+      summary: 更新标签(Tag)的接口
+      tags:
+      - 标签相关接口
+  /tag/:id:
+    delete:
+      consumes:
+      - application/json
+      description: 通过该接口可以删除单个Tag
+      parameters:
+      - description: Bearer token(jwt)
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code=1000表示成功其余失败
+          schema:
+            $ref: '#/definitions/controller._ResponseNoDataArea'
+      security:
+      - ApiKeyAuth: []
+      summary: 删除单个标签(Tag)的接口
+      tags:
+      - 标签相关接口
+    get:
+      consumes:
+      - application/json
+      description: 通过该接口可以获得当前标签的详细信息
+      parameters:
+      - description: Bearer token(jwt)
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller._ResponseTagDetailList'
+      security:
+      - ApiKeyAuth: []
+      summary: 根据ID获取标签的详细信息的接口
+      tags:
+      - 标签相关接口
+  /tags:
+    get:
+      consumes:
+      - application/json
+      description: 通过该接口可以获得当前的所有标签
+      parameters:
+      - description: Bearer token(jwt)
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller._ResponseAllTagList'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取所有标签（简略信息）的接口
+      tags:
+      - 标签相关接口
 swagger: "2.0"

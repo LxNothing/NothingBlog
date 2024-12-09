@@ -30,7 +30,11 @@ type AppConfig struct {
 }
 
 type SystemConfig struct {
-	PageSize int8 `mapstructure:"page_size"` // 文章页每页默认的显示数量
+	PageSize      int8   `mapstructure:"page_size"`       // 文章页每页默认的显示数量
+	UploadModel   string `mapstructure:"upload_model"`    // 文件上传的模式
+	UploadPath    string `mapstructure:"upload_path"`     // 文件保存的本地路径
+	VisitPath     string `mapstructure:"visit_path"`      // 文件的本地访问路径
+	DefaultAtcImg string `mapstructure:"default_atc_img"` // 文章的默认缩略图
 }
 
 type AuthConfig struct {

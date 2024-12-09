@@ -51,7 +51,11 @@ func QueryClassesByName(name string) (*models.Class, error) {
 // 业务实现是：如果有文章属于这个类别，那么这个类别不允许删除，只能更改
 // 因此这里没有更新文章表中的class_id
 func DeleteClassByIds(ids []int64) error {
-	return Db.Where("class_id in (ids)").Unscoped().Delete(&models.Class{}).Error
+	return Db.Where("class_id in (?)", ids).Unscoped().Delete(&models.Class{}).Error
+}
+
+func DeleteClassById(ids int64) error {
+	return Db.Where("class_id = ?", ids).Unscoped().Delete(&models.Class{}).Error
 }
 
 func UpdateClassById(class *models.Class) error {

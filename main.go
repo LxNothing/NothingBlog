@@ -5,6 +5,7 @@ import (
 	"NothingBlog/dao/redis"
 	"NothingBlog/dao/table"
 	"NothingBlog/logger"
+	"NothingBlog/middleware"
 	"NothingBlog/package/snowflake"
 	"NothingBlog/package/verifycode"
 	"NothingBlog/routers"
@@ -84,10 +85,18 @@ func main() {
 	}
 
 	// 设置日志记录中间件
-	r.Use(logger.GinZapLogger(), logger.GinZapRecovery(true))
+	r.Use(logger.GinZapLogger(), logger.GinZapRecovery(true), middleware.CORS())
+
 	// 这个路由用于配置接口文档的访问路由 - 仅在开发阶段使用
 	docs.SwaggerInfo.BasePath = settings.Confg.AdminBasePath
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+
+	// 如果使用本地作为文件的保存地址，则需要配置静态资源 - 实际可以使用nginx实现动静分离
+	if settings.Confg.SystemConfig.UploadModel == "local" {
+		//r.Static(settings.Confg.SystemConfig.VisitPath, settings.Confg.SystemConfig.UploadPath)
+		r.Static("static/", "./static")
+	}
+
 	// 配置客户端访问和admin访问的路由
 	routers.ClientSetUp(settings.Confg.ClientBasePath, r)
 	routers.AdminSetUp(settings.Confg.AdminBasePath, r)

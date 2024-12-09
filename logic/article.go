@@ -4,6 +4,7 @@ import (
 	"NothingBlog/dao/mysql"
 	"NothingBlog/models"
 	"NothingBlog/package/snowflake"
+	"NothingBlog/settings"
 	"errors"
 	"time"
 
@@ -61,7 +62,7 @@ func CreateNewArticle(article *models.Article, tagList []models.TagFormsParams) 
 
 	// 文章分类ID，文章tag 由 数据库插入的时候进行自动维护，因为建表的时候就关联了对应的键
 	if article.Image == "" {
-		article.Image = "to do, default image"
+		article.Image = settings.Confg.DefaultAtcImg
 	}
 
 	// 生成文章id
