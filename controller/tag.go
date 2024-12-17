@@ -9,6 +9,8 @@ import (
 	"go.uber.org/zap"
 )
 
+var logicTag logic.LogicTag
+
 // CreateTagHandler 创建tag
 // @Summary 创建标签(tag)的接口
 // @Description 通过该接口可以创建标签
@@ -32,7 +34,7 @@ func CreateTagHandler(ctx *gin.Context) {
 	tag.Name = tagParam.Name
 	tag.Desc = tagParam.Desc
 
-	if err := logic.CreateNewTag(tag); err != nil {
+	if err := logicTag.CreateNewTag(tag); err != nil {
 		zap.L().Debug("创建Tag失败", zap.Error(err))
 		ResponseError(ctx, CodeServerBusy)
 		return
@@ -51,7 +53,7 @@ func CreateTagHandler(ctx *gin.Context) {
 // @Success 200 {object} _ResponseAllTagList
 // @Router /tags [get]
 func GetAllTagsHandler(ctx *gin.Context) {
-	tag, err := logic.GetAllTags()
+	tag, err := logicTag.GetAllTags()
 	if err != nil {
 		zap.L().Debug("查询文章种类失败", zap.Error(err))
 		ResponseError(ctx, CodeServerBusy)
@@ -77,24 +79,24 @@ func GetTagByIdHandler(ctx *gin.Context) {
 		return
 	}
 
-	tag, err := logic.GetTagById(tagId)
+	tag, err := logicTag.GetTagById(tagId)
 	if err != nil {
 		zap.L().Debug("查询文章种类失败", zap.Error(err))
 		ResponseError(ctx, CodeServerBusy)
 	}
 
-	resp := models.ResponseTagDetail{
-		ResponseTagBrief: models.ResponseTagBrief{
-			TagId:    tag.TagId,
-			Name:     tag.Name,
-			AtcCount: int32(tag.ArticleCount),
-		},
-		Desc:      tag.Desc,
-		CreatedAt: tag.CreatedAt,
-		UpdatedAt: tag.UpdatedAt,
-	}
+	// resp := models.ResponseTagDetail{
+	// 	ResponseTagBrief: models.ResponseTagBrief{
+	// 		TagId:    tag.TagId,
+	// 		Name:     tag.Name,
+	// 		AtcCount: int32(tag.ArticleCount),
+	// 	},
+	// 	Desc:      tag.Desc,
+	// 	CreatedAt: tag.CreatedAt,
+	// 	UpdatedAt: tag.UpdatedAt,
+	// }
 
-	ResponseSuccess(ctx, resp)
+	ResponseSuccess(ctx, tag)
 }
 
 // DeleteTagHandler 删除单个Tag
@@ -115,7 +117,7 @@ func DeleteTagHandler(ctx *gin.Context) {
 		return
 	}
 
-	err = logic.DeleteTagById(tagId)
+	err = logicTag.DeleteTagById(tagId)
 	if err != nil {
 		zap.L().Error("删除tag失败", zap.Error(err))
 		ResponseError(ctx, CodeServerBusy)
@@ -142,7 +144,7 @@ func DeleteMultiTagHandler(ctx *gin.Context) {
 		ResponseError(ctx, CodeParameterInvalid)
 		return
 	}
-	if err := logic.DeleteMultiTagById(param.Ids); err != nil {
+	if err := logicTag.DeleteMultiTagById(param.Ids); err != nil {
 		zap.L().Error("删除Tag失败", zap.Error(err))
 		ResponseError(ctx, CodeServerBusy)
 		return
@@ -171,7 +173,7 @@ func UpdateTagHandler(ctx *gin.Context) {
 	}
 
 	// // 查找ID是否存在
-	_, err := logic.GetTagById(newTag.TagId)
+	_, err := logicTag.GetTagById(newTag.TagId)
 	if err != nil {
 		zap.L().Debug("ID错误", zap.Error(err))
 		ResponseErrorWithMsg(ctx, CodeParameterInvalid, "要修改的Tag不存在")
@@ -179,7 +181,7 @@ func UpdateTagHandler(ctx *gin.Context) {
 	}
 
 	// 查找名称是否重复
-	oldTag, err := logic.GetTagByName(newTag.Name)
+	oldTag, err := logicTag.GetTagByName(newTag.Name)
 	if err == nil && oldTag.TagId > 0 && oldTag.TagId != newTag.TagId {
 		zap.L().Debug("Tag名称重复")
 		ResponseError(ctx, CodeTagExisted) // 名称重复
@@ -192,7 +194,7 @@ func UpdateTagHandler(ctx *gin.Context) {
 		Desc:  newTag.Desc,
 	}
 
-	if err := logic.UpdateTag(tag); err != nil {
+	if err := logicTag.UpdateTag(tag); err != nil {
 		zap.L().Debug("更新Tag失败", zap.Error(err))
 		ResponseError(ctx, CodeServerBusy)
 		return

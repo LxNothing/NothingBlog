@@ -3,14 +3,14 @@ package controller
 import (
 	"NothingBlog/logic"
 	"NothingBlog/models"
-	"NothingBlog/package/utils"
-	"NothingBlog/settings"
 	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
+
+var logicClass logic.LogicClass
 
 // GetAllClassesHandler 获取所有的类别
 // @Summary 获取所有类别（简略信息）的接口
@@ -23,7 +23,7 @@ import (
 // @Success 200 {object} _ResponseAllClassesList
 // @Router /classes [get]
 func GetAllClassesHandler(ctx *gin.Context) {
-	cls, err := logic.GetAllClasses()
+	cls, err := logicClass.GetAllClasses()
 	if err != nil {
 		zap.L().Debug("获取所有的class失败", zap.Error(err))
 		ResponseError(ctx, CodeServerBusy)
@@ -52,7 +52,7 @@ func GetClassByIdHandler(ctx *gin.Context) {
 		return
 	}
 
-	cls, err := logic.GetClassById(id)
+	cls, err := logicClass.GetClassById(id)
 	if err != nil {
 		zap.L().Debug("通过ID获取class失败", zap.Error(err))
 		ResponseError(ctx, CodeServerBusy)
@@ -74,10 +74,8 @@ func GetClassByIdHandler(ctx *gin.Context) {
 // @Success 200 {object} _ResponseCreateClass "code=1000表示成功其余失败"
 // @Router /class [post]
 func CreateClassHandler(ctx *gin.Context) {
-	var clsId int64
-	var err error
 	classParam := new(models.ClassCreateFormParams)
-	if err = ctx.ShouldBindJSON(classParam); err != nil {
+	if err := ctx.ShouldBindJSON(classParam); err != nil {
 		zap.L().Debug("解析创建Tag的参数失败", zap.Error(err))
 		ResponseError(ctx, CodeParameterInvalid)
 		return
@@ -87,23 +85,20 @@ func CreateClassHandler(ctx *gin.Context) {
 	cls.Name = classParam.Name
 	cls.Desc = classParam.Desc
 
-	if clsId, err = logic.CreateNewClass(cls); err != nil {
-		zap.L().Debug("创建Tag失败", zap.Error(err))
+	var new_class *models.ClassBriefReturn
+	var err error
+	if new_class, err = logicClass.CreateNewClass(cls); err != nil {
 		ResponseError(ctx, CodeServerBusy)
 		return
 	}
 
-	ResponseSuccess(ctx, models.ResponseClassBrief{
-		ClassId:  clsId,
-		Name:     cls.Name,
-		AtcCount: 0,
-	})
+	ResponseSuccess(ctx, new_class)
 }
 
 // category?class=all 这个接口是供客户端使用的，不需要进行jwt认证
 func GetAllClassClientHandler(ctx *gin.Context) {
 	var clsId int64
-	var tagId int64
+	//var tagId int64
 	var page int = 1
 	// 获取参数
 	clsStr := ctx.Query("class")
@@ -130,7 +125,7 @@ func GetAllClassClientHandler(ctx *gin.Context) {
 
 	// 如果客户端指定了class，则判断class是否已经存在
 	if clsStr != "all" {
-		cls, _ := logic.GetClassByName(clsStr) // 查询对应的class是否存在
+		cls, _ := logicClass.GetClassByName(clsStr) // 查询对应的class是否存在
 		if cls == nil {
 			zap.L().Debug("传递的查询文章种类参数错误")
 			ResponseErrorWithMsg(ctx, CodeParameterInvalid, "class名错误")
@@ -141,17 +136,17 @@ func GetAllClassClientHandler(ctx *gin.Context) {
 
 	// 判断tag是否已经存在
 	if tagStr != "all" {
-		tag, _ := logic.GetTagByName(tagStr) // 查询对应的class是否存在
+		tag, _ := logicTag.GetTagByName(tagStr) // 查询对应的class是否存在
 		if tag == nil {
 			zap.L().Debug("传递的查询tag种类参数错误")
 			ResponseErrorWithMsg(ctx, CodeParameterInvalid, "tag名错误")
 			return
 		}
-		tagId = tag.TagId
+		//tagId = tag.TagId
 	}
 
 	// 获取所有的类别
-	classes, err := logic.GetAllClasses()
+	classes, err := logicClass.GetAllClasses()
 	if err != nil {
 		zap.L().Debug("查询文章种类失败", zap.Error(err))
 		ResponseError(ctx, CodeServerBusy)
@@ -173,10 +168,10 @@ func GetAllClassClientHandler(ctx *gin.Context) {
 	// 根据class名称，获取对应章的所有tag
 	var tags []models.ResponseTagBrief
 	if clsStr == "all" {
-		tags, _ = logic.GetAllTags() // class = all, 则获取所有的tag信息
+		tags, _ = logicTag.GetAllTags() // class = all, 则获取所有的tag信息
 	} else {
 		// class != all, 则获取该类别下的所有文章的不重复tag
-		tags, err = logic.GetTagByClassId(clsId)
+		tags, err = logicTag.GetTagByClassId(clsId)
 		if err != nil {
 			zap.L().Debug("查询tag失败", zap.Error(err))
 			ResponseError(ctx, CodeServerBusy)
@@ -199,25 +194,25 @@ func GetAllClassClientHandler(ctx *gin.Context) {
 	// class = 具体的class tag = 具体的tag - 使用两者进行排序
 	// 都是 all 则 不包含这两个筛选条件，通过时间或者阅读量进行排序
 
-	var pagesize = int(settings.Confg.PageSize)
+	//var pagesize = int(settings.Confg.PageSize)
 	var atcs []models.ArticleBriefReturn
-	var total int64
+	//var total int64
 
-	if clsStr == "all" {
-		if tagStr == "all" {
-			atcs, total, err = logic.GetArticleWithPage(page, pagesize, models.StatusDraft, models.PrivilegePrivte, 0)
+	// if clsStr == "all" {
+	// 	if tagStr == "all" {
+	// 		atcs, total, err = logicArticle.GetArticleWithPage(page, pagesize, models.StatusDraft, models.PrivilegePrivte, 0)
 
-		} else {
-			atcs, total, err = logic.GetArticleByTagWithPage(tagId, page, pagesize, models.StatusDraft, models.PrivilegePrivte)
-		}
-	} else {
-		if tagStr == "all" {
-			atcs, total, err = logic.GetArticleByClassWithPage(clsId, page, pagesize, models.StatusDraft, models.PrivilegePrivte)
+	// 	} else {
+	// 		atcs, total, err = logicArticle.GetArticleByTagWithPage(tagId, page, pagesize, models.StatusDraft, models.PrivilegePrivte)
+	// 	}
+	// } else {
+	// 	if tagStr == "all" {
+	// 		atcs, total, err = logicArticle.GetArticleByClassWithPage(clsId, page, pagesize, models.StatusDraft, models.PrivilegePrivte)
 
-		} else {
-			atcs, total, err = logic.GetArticleByClassAndTagWithPage(clsId, tagId, page, pagesize, models.StatusDraft, models.PrivilegePrivte)
-		}
-	}
+	// 	} else {
+	// 		atcs, total, err = logicArticle.GetArticleByClassAndTagWithPage(clsId, tagId, page, pagesize, models.StatusDraft, models.PrivilegePrivte)
+	// 	}
+	// }
 
 	if err != nil {
 		zap.L().Debug("分页查询文章出错", zap.Error(err))
@@ -226,7 +221,7 @@ func GetAllClassClientHandler(ctx *gin.Context) {
 	}
 
 	// 计算总的页数
-	total_page := utils.GetTotalPage(int64(pagesize), total)
+	total_page := 0 //utils.GetTotalPage(int64(pagesize), total)
 	// 返回结果
 	ResponseSuccess(ctx, gin.H{
 		"category":   category,
@@ -255,7 +250,7 @@ func DeleteClassHandler(ctx *gin.Context) {
 	}
 
 	// 类别下存在文章则不允许删除
-	err = logic.DeleteOneClassById(clsId)
+	err = logicClass.DeleteOneClassById(clsId)
 	if err != nil {
 		zap.L().Debug("删除Class失败", zap.Error(err))
 		if errors.Is(err, logic.ErrDeleteClassByIds) {
@@ -287,7 +282,7 @@ func DeleteMultiClassHandler(ctx *gin.Context) {
 		return
 	}
 
-	ids, err := logic.DeleteMultiClassById(param.Ids)
+	ids, err := logicClass.DeleteMultiClassById(param.Ids)
 	if err != nil {
 		zap.L().Error("删除Class失败", zap.Error(err))
 		if errors.Is(err, logic.ErrDeleteClassByIds) {
@@ -325,7 +320,7 @@ func UpdateClassHandler(ctx *gin.Context) {
 	}
 
 	// // 查找ID是否存在
-	_, err := logic.GetClassById(newClass.ClassId)
+	_, err := logicClass.GetClassById(newClass.ClassId)
 	if err != nil {
 		zap.L().Debug("ID错误", zap.Error(err))
 		ResponseErrorWithMsg(ctx, CodeParameterInvalid, "要修改的Class不存在")
@@ -333,7 +328,7 @@ func UpdateClassHandler(ctx *gin.Context) {
 	}
 
 	// 查找名称是否重复
-	oldClass, err := logic.GetClassByName(newClass.Name)
+	oldClass, err := logicClass.GetClassByName(newClass.Name)
 	if err == nil && oldClass.ClassId > 0 && oldClass.ClassId != newClass.ClassId {
 		zap.L().Debug("Class名称重复")
 		ResponseError(ctx, CodeClassNameExisted) // 名称重复
@@ -346,7 +341,7 @@ func UpdateClassHandler(ctx *gin.Context) {
 		Desc:    newClass.Desc,
 	}
 
-	if err := logic.UpdateClass(class); err != nil {
+	if err := logicClass.UpdateClass(class); err != nil {
 		zap.L().Debug("更新Class失败", zap.Error(err))
 		ResponseError(ctx, CodeServerBusy)
 		return

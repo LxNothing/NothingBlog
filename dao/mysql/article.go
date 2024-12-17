@@ -16,26 +16,10 @@ var (
 	ErrQueryArticle      = errors.New("查询文章出错")
 )
 
-var (
-	defaultPageIndex    = 1
-	defaultSizeEachPage = 10
-)
-
-func getVaildPageAndSize(page *int, size *int, totalPage int) {
-	if *page < 1 {
-		*page = defaultPageIndex
-	}
-
-	if *page > totalPage {
-		*page = totalPage
-	}
-
-	if *size < 1 {
-		*size = defaultSizeEachPage
-	}
+type DaoArticle struct {
 }
 
-func CreateArticle(a *models.Article, tagList []models.TagFormsParams) error {
+func (da DaoArticle) CreateArticle(a *models.Article, tagList []models.TagFormsParams) error {
 	// 开启事务
 	tx := Db.Begin()
 	defer func() {
@@ -79,12 +63,11 @@ func CreateArticle(a *models.Article, tagList []models.TagFormsParams) error {
 			return ErrCreateArticle
 		}
 	}
-	// 更新tag表中所含文章的数量
 	// 提交事务
 	return tx.Commit().Error
 }
 
-func UpdateArticle(new *models.Article, old *models.Article, tagList []models.TagFormsParams) error {
+func (da DaoArticle) UpdateArticle(new *models.Article, old *models.Article, tagList []models.TagFormsParams) error {
 	tx := Db.Begin()
 	defer func() {
 		if err := recover(); err != nil {
@@ -174,7 +157,7 @@ func UpdateArticle(new *models.Article, old *models.Article, tagList []models.Ta
 }
 
 // 根据文章名称查询文章
-func QueryArticleByTitle(title string) (*models.Article, error) {
+func (da DaoArticle) QueryArticleByTitle(title string) (*models.Article, error) {
 	article := new(models.Article)
 	err := Db.Preload("Class").Preload("TagList").Where("title=?", title).Take(article).Error
 	if err != nil {
@@ -187,7 +170,7 @@ func QueryArticleByTitle(title string) (*models.Article, error) {
 	return article, err
 }
 
-func QueryArticleById(id int64) (*models.Article, error) {
+func (da DaoArticle) QueryArticleById(id int64) (*models.Article, error) {
 	article := new(models.Article)
 
 	err := Db.Preload("Class").Preload("TagList").Where("article_id=?", id).Take(article).Error
@@ -202,7 +185,7 @@ func QueryArticleById(id int64) (*models.Article, error) {
 }
 
 // QueryArticleAll 查询所有的文章
-func QueryArticleAll() ([]models.Article, error) {
+func (da DaoArticle) QueryArticleAll() ([]models.Article, error) {
 	var articles []models.Article
 	if err := Db.Preload("Class").Preload("TagList").Find(&articles).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -213,12 +196,81 @@ func QueryArticleAll() ([]models.Article, error) {
 	return articles, nil
 }
 
+// QueryArticleWithParams 根据指定的参数从数据库查询文章
+// page 查询的页号, 当page=0，size=0时默认查询所有
+// size 每页的大小
+// class_id 文章所属类别的id, <0 时 查询所有类别
+// tagId 文章所属包含的Tag列表，为nil时 查询所有tag
+// stus 文章状态 =0时查询所有
+// priv 文章权限 =0时查询所有
+// key 模糊匹配的关键字，=""时查询所有
+func (da DaoArticle) QueryArticleWithParams(page, size int, class_id int64, tagId []int64, stus, priv uint8, key string) ([]models.Article, int64, error) {
+	var articles []models.Article
+
+	query := Db.Preload("User").Preload("Class").Preload("TagList").Model(&models.Article{}).Order("top_flag desc, article_id desc")
+
+	if stus != 0 {
+		zap.L().Debug("query with stus", zap.Uint8("stus", stus))
+		query = query.Where("status = ?", stus)
+	}
+
+	if priv != 0 {
+		zap.L().Debug("query with priv")
+		query = query.Where("privilege = ?", priv)
+	}
+
+	if class_id > 0 {
+		zap.L().Debug("query with class_id")
+		query = query.Where("class_id = ?", class_id)
+	}
+
+	if key != "" { // 按关键字模糊匹配 - 仅限标题
+		zap.L().Debug("query with key", zap.String("key", key))
+		query = query.Where("title like concat('%',?,'%')", key)
+	}
+
+	if tagId != nil { // 查询tag
+		joinStr := `INNER JOIN tag_article 
+				ON articles.article_id = tag_article.article_id 
+				INNER JOIN tags 
+				ON tag_article.tag_id = tags.tag_id`
+
+		query = query.Joins(joinStr).Where("tags.tag_id in (?)", tagId)
+	}
+
+	// 只查询部分字段
+	query = query.Select([]string{"articles.article_id", "articles.created_at",
+		"articles.updated_at", "author_id", "class_id", "top_flag", "Status",
+		"privilege", "title", "summary", "image", "comment_count", "visit_count"})
+
+	// 查询满足要求的记录条数
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		zap.L().Debug("查询文章总数出错", zap.Error(err))
+		return nil, 0, ErrQueryArticle
+	}
+
+	if page > 0 && size > 0 {
+		query = query.Limit(size).Offset(size * (page - 1))
+	}
+
+	if err := query.Find(&articles).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) { // 未找到记录不应该返回错误
+			return make([]models.Article, 0), 0, nil
+		}
+		zap.L().Debug("按页查找文章出错", zap.Error(err))
+		return nil, 0, ErrQueryArticle
+	}
+
+	return articles, total, nil
+}
+
 // QueryArticleWithPage 根据页和每页文章数查询文章信息，不包含文章具体内容信息
 // 返回参数：
 //  1. 文章信息
 //  2. 满足指定条件的记录总数
 //  3. 错误信息
-func QueryArticleWithPage(page int, size int, state models.StatusType, privilege models.PrivilegeType, class_id int64) ([]models.Article, int64, error) {
+/*func (da DaoArticle) QueryArticleWithPage(page, size int, state, privilege uint8, class_id int64) ([]models.Article, int64, error) {
 	var articles []models.Article
 	query := Db.Preload("User").Preload("Class").Preload("TagList").Model(&models.Article{}).Order("top_flag desc, article_id desc")
 	query = query.Where("privilege = ? and status = ?", privilege, state)
@@ -237,17 +289,18 @@ func QueryArticleWithPage(page int, size int, state models.StatusType, privilege
 		zap.L().Debug("查询文章总数出错", zap.Error(err))
 		return nil, 0, ErrQueryArticle
 	}
-	getVaildPageAndSize(&page, &size, int(total))
+
+	utils.GetVaildPageAndSize(&page, &size, int(total))
 	if err := query.Limit(size).Offset(size * (page - 1)).Find(&articles).Error; err != nil {
 		zap.L().Debug("按页查找文章出错", zap.Error(err))
 		return nil, 0, ErrQueryArticle
 	}
 
 	return articles, total, nil
-}
+}*/
 
 // QueryArticleByClass 获取指定类别下的文章
-func QueryArticleByClass(classId int64) ([]models.Article, error) {
+func (da DaoArticle) QueryArticleByClass(classId int64) ([]models.Article, error) {
 	var articles []models.Article
 	if err := Db.Preload("Class").Model(&models.Article{}).Where("class_id = ?", classId).Find(&articles).Error; err != nil {
 		zap.L().Debug("通过class id查询文章出错", zap.Error(err))
@@ -257,7 +310,7 @@ func QueryArticleByClass(classId int64) ([]models.Article, error) {
 	return articles, nil
 }
 
-func QueryArticleNumberWithClass(classId int64) (int64, error) {
+func (da DaoArticle) QueryArticleNumberWithClass(classId int64) (int64, error) {
 	var counter int64
 	if err := Db.Model(&models.Article{}).Where("class_id = ?", classId).Count(&counter).Error; err != nil {
 		zap.L().Debug("通过class id查询文章出错", zap.Error(err))
@@ -267,7 +320,7 @@ func QueryArticleNumberWithClass(classId int64) (int64, error) {
 }
 
 // QueryArticleByClass 获取指定类别下的文章
-func QueryArticleByClassWithPage(classId int64, page int, size int, state models.StatusType, privilege models.PrivilegeType) ([]models.Article, int64, error) {
+/*func (da DaoArticle) QueryArticleByClassWithPage(classId int64, page int, size int, state, privilege uint8) ([]models.Article, int64, error) {
 	var articles []models.Article
 	query := Db.Preload("Class").Preload("TagList").Preload("User").Model(&models.Article{}).Where("class_id = ?", classId)
 	query = query.Where("privilege = ? and status = ?", privilege, state)
@@ -278,7 +331,7 @@ func QueryArticleByClassWithPage(classId int64, page int, size int, state models
 		return nil, 0, ErrQueryArticle
 	}
 
-	getVaildPageAndSize(&page, &size, int(total))
+	utils.GetVaildPageAndSize(&page, &size, int(total))
 	if err := query.Limit(size).Offset(size * (page - 1)).Find(&articles).Error; err != nil {
 		zap.L().Debug("按页查找文章出错", zap.Error(err))
 		return nil, 0, ErrQueryArticle
@@ -287,7 +340,7 @@ func QueryArticleByClassWithPage(classId int64, page int, size int, state models
 }
 
 // QueryArticleByTag 获取指定Tag下的文章
-func QueryArticleByTag(tagId int64) ([]models.Article, error) {
+func (da DaoArticle) QueryArticleByTag(tagId int64) ([]models.Article, error) {
 	var articles []models.Article
 
 	err := Db.Raw("select * from articles where 'article_id' in (select article_id from tag_article where tag_id = ?)", tagId).Scan(&articles).Error
@@ -298,14 +351,14 @@ func QueryArticleByTag(tagId int64) ([]models.Article, error) {
 	return articles, nil
 }
 
-func QueryArticleByTagWithPage(tagId int64, page int, size int, state models.StatusType, privilege models.PrivilegeType) ([]models.Article, int64, error) {
+func (da DaoArticle) QueryArticleByTagWithPage(tagId int64, page, size int, state, privilege uint8) ([]models.Article, int64, error) {
 	var articles []models.Article
 	var total int64
 	//Db.Preload("TagList").Joins("INNER JOIN tag_article ON articles.article_id = tag_article.article_id INNER JOIN tags ON tag_article.tag_id = tags.tag_id").Where("tags.tag_id = ?", tagId).Find(&articles)
 	//fmt.Println(articles)
 
 	queryStr := `select count(*)
-				 from articles 
+				 from articles
 				 where privilege = ? and status = ? and article_id in (select article_id from tag_article where tag_id = ?)`
 
 	if err := Db.Raw(queryStr, privilege, state, tagId).Count(&total).Error; err != nil {
@@ -313,7 +366,7 @@ func QueryArticleByTagWithPage(tagId int64, page int, size int, state models.Sta
 		return nil, 0, ErrQueryArticle
 	}
 
-	//getVaildPageAndSize(&page, &size, int(total))
+	//utils.GetVaildPageAndSize(&page, &size, int(total))
 	// queryStr = `select *
 	// 			from articles
 	// 			where article_id in (select article_id from tag_article where tag_id = ?) limit ? offset ?`
@@ -321,14 +374,14 @@ func QueryArticleByTagWithPage(tagId int64, page int, size int, state models.Sta
 	// 	zap.L().Debug("通过Tag按页查找文章出错", zap.Error(err))
 	// 	return nil, 0, ErrQueryArticle
 	// }
-	joinStr := `INNER JOIN tag_article 
-				ON articles.article_id = tag_article.article_id 
-				INNER JOIN tags 
+	joinStr := `INNER JOIN tag_article
+				ON articles.article_id = tag_article.article_id
+				INNER JOIN tags
 				ON tag_article.tag_id = tags.tag_id`
 	query := Db.Preload("TagList").Preload("User").Preload("Class").Joins(joinStr)
 	query = query.Where("tags.tag_id = ?", tagId)
 	query = query.Where("privilege = ? and status = ?", privilege, state)
-	getVaildPageAndSize(&page, &size, int(total))
+	utils.GetVaildPageAndSize(&page, &size, int(total))
 	if err := query.Limit(size).Offset(size * (page - 1)).Find(&articles).Error; err != nil {
 		zap.L().Debug("通过Tag按页查找文章出错", zap.Error(err))
 		return nil, 0, ErrQueryArticle
@@ -336,11 +389,11 @@ func QueryArticleByTagWithPage(tagId int64, page int, size int, state models.Sta
 	return articles, total, nil
 }
 
-func QueryArticleByClassAndTagWithPage(clsId int64, tagId int64, page int, size int, state models.StatusType, privilege models.PrivilegeType) ([]models.Article, int64, error) {
+func (da DaoArticle) QueryArticleByClassAndTagWithPage(clsId int64, tagId int64, page int, size int, state, privilege uint8) ([]models.Article, int64, error) {
 	var articles []models.Article
 	var total int64
 
-	queryStr := `select count(*) from articles 
+	queryStr := `select count(*) from articles
 				where class_id = ? and privilege = ? and status = ? and article_id in (select article_id from tag_article where tag_id = ?)`
 
 	if err := Db.Raw(queryStr, clsId, privilege, state, tagId).Count(&total).Error; err != nil {
@@ -351,7 +404,7 @@ func QueryArticleByClassAndTagWithPage(clsId int64, tagId int64, page int, size 
 	// queryStr = `select * from articles
 	// 			where class_id = ? and article_id in (select article_id from tag_article where tag_id = ?)
 	// 			limit ? offset ?`
-	// getVaildPageAndSize(&page, &size, int(total))
+	// utils.GetVaildPageAndSize(&page, &size, int(total))
 	// if err := Db.Raw(queryStr, clsId, tagId, size, size*(page-1)).Scan(&articles).Error; err != nil {
 	// 	zap.L().Debug("通过Tag和class按页查找文章出错", zap.Error(err))
 	// 	return nil, 0, ErrQueryArticle
@@ -359,20 +412,20 @@ func QueryArticleByClassAndTagWithPage(clsId int64, tagId int64, page int, size 
 
 	// return articles, total, nil
 
-	joinStr := `INNER JOIN tag_article 
-				ON articles.article_id = tag_article.article_id 
-				INNER JOIN tags 
+	joinStr := `INNER JOIN tag_article
+				ON articles.article_id = tag_article.article_id
+				INNER JOIN tags
 				ON tag_article.tag_id = tags.tag_id`
 	query := Db.Preload("TagList").Preload("User").Preload("Class").Joins(joinStr)
 	query = query.Where("tags.tag_id = ? and articles.class_id = ?", tagId, clsId)
 	query = query.Where("privilege = ? and status = ?", privilege, state)
-	getVaildPageAndSize(&page, &size, int(total))
+	utils.GetVaildPageAndSize(&page, &size, int(total))
 	if err := query.Limit(size).Offset(size * (page - 1)).Find(&articles).Error; err != nil {
 		zap.L().Debug("通过Tag按页查找文章出错", zap.Error(err))
 		return nil, 0, ErrQueryArticle
 	}
 	return articles, total, nil
-}
+}*/
 
 /*func DeleteArticleById(id int64) error {
 	tx := Db.Begin()
@@ -422,7 +475,7 @@ func QueryArticleByClassAndTagWithPage(clsId int64, tagId int64, page int, size 
 	return tx.Commit().Error
 }*/
 
-func DeleteMultiArticleById(ids []int64) error {
+func (da DaoArticle) DeleteMultiArticleById(ids []int64) error {
 	tx := Db.Begin()
 	defer func() {
 		if err := recover(); err != nil {
@@ -438,6 +491,13 @@ func DeleteMultiArticleById(ids []int64) error {
 					set atc_count = atc_count - 1 
 					where class_id in (select class_id from articles where article_id in (?)) 
 					and atc_count > 0`, ids)
+	if res.Error != nil {
+		tx.Rollback()
+		return res.Error
+	}
+
+	// 删除对应文章的所有评论
+	res = tx.Exec("delete from `comments` where `article_id` in (?)", ids)
 	if res.Error != nil {
 		tx.Rollback()
 		return res.Error
@@ -471,11 +531,11 @@ func DeleteMultiArticleById(ids []int64) error {
 }
 
 // UpdateArticleStatusById 更新文章的状态
-func UpdateArticleStatusById(ids []int64, tp models.StatusType) error {
+func (da DaoArticle) UpdateArticleStatusById(ids []int64, tp uint8) error {
 	return Db.Model(&models.Article{}).Where("article_id in (?)", ids).UpdateColumn("status", tp).Error
 }
 
 // UpdateArticleVisitCountById 更新文章的访问量
-func UpdateArticleVisitCountById(id int64, newCount uint32) error {
+func (da DaoArticle) UpdateArticleVisitCountById(id int64, newCount uint32) error {
 	return Db.Model(&models.Article{}).Where("article_id = ?", id).UpdateColumn("visit_count", newCount).Error
 }

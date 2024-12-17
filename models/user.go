@@ -14,3 +14,15 @@ type User struct {
 	UserIcon string `json:"user_icon" gorm:"type:varchar(255)"`               // 头像
 	Desc     string `json:"desc" gorm:"type:varchar(255)"`                    // 个人描述-
 }
+
+type UserBrief struct {
+	UserId   int64  `json:"user_id"`
+	UserName string `json:"username"`
+}
+
+func (u *User) BindToBriefUser() UserBrief {
+	return UserBrief{
+		UserId:   u.UserId,
+		UserName: u.UserName,
+	}
+}

@@ -10,21 +10,21 @@ import (
 
 // 类别（class）相关
 type _ResponseAllClassesList struct {
-	Code ResponseCodeType             `json:"code"`
-	Msg  interface{}                  `json:"msg"`
-	Data []*models.ResponseClassBrief //`json:"data,omitempty"` //omitempty 该字段为空时忽略
+	Code ResponseCodeType           `json:"code"`
+	Msg  interface{}                `json:"msg"`
+	Data []*models.ClassBriefReturn //`json:"data,omitempty"` //omitempty 该字段为空时忽略
 }
 
 type _ResponseClassDetailList struct {
-	Code ResponseCodeType            `json:"code"`
-	Msg  interface{}                 `json:"msg"`
-	Data *models.ResponseClassDetail //`json:"data,omitempty"` //omitempty 该字段为空时忽略
+	Code ResponseCodeType          `json:"code"`
+	Msg  interface{}               `json:"msg"`
+	Data *models.ClassEntireReturn //`json:"data,omitempty"` //omitempty 该字段为空时忽略
 }
 
 type _ResponseCreateClass struct {
-	Code ResponseCodeType           `json:"code"`
-	Msg  interface{}                `json:"msg"`
-	Data *models.ResponseClassBrief //`json:"data,omitempty"` //omitempty 该字段为空时忽略
+	Code ResponseCodeType         `json:"code"`
+	Msg  interface{}              `json:"msg"`
+	Data *models.ClassBriefReturn //`json:"data,omitempty"` //omitempty 该字段为空时忽略
 }
 
 // 返回的数据不包含data域
@@ -41,19 +41,19 @@ type _ResponseNoDataArea struct {
 
 // 标签（tag）相关
 type _ResponseAllTagList struct {
-	Code ResponseCodeType           `json:"code"`
-	Msg  interface{}                `json:"msg"`
-	Data []*models.ResponseTagBrief //`json:"data,omitempty"` //omitempty 该字段为空时忽略
+	Code ResponseCodeType         `json:"code"`
+	Msg  interface{}              `json:"msg"`
+	Data []*models.TagBriefReturn //`json:"data,omitempty"` //omitempty 该字段为空时忽略
 }
 
 type _ResponseTagDetailList struct {
-	Code ResponseCodeType          `json:"code"`
-	Msg  interface{}               `json:"msg"`
-	Data *models.ResponseTagDetail //`json:"data,omitempty"` //omitempty 该字段为空时忽略
+	Code ResponseCodeType        `json:"code"`
+	Msg  interface{}             `json:"msg"`
+	Data *models.TagEntireReturn //`json:"data,omitempty"` //omitempty 该字段为空时忽略
 }
 
 type _ResponseCreateTag struct {
-	Code ResponseCodeType         `json:"code"`
-	Msg  interface{}              `json:"msg"`
-	Data *models.ResponseTagBrief //`json:"data,omitempty"` //omitempty 该字段为空时忽略
+	Code ResponseCodeType       `json:"code"`
+	Msg  interface{}            `json:"msg"`
+	Data *models.TagBriefReturn //`json:"data,omitempty"` //omitempty 该字段为空时忽略
 }

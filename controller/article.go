@@ -10,6 +10,8 @@ import (
 	"go.uber.org/zap"
 )
 
+var logicArticle logic.LogicArticle
+
 // GetAllArticleHandler 获取所有文章
 // @Summary 获取所有文章的接口
 // @Description 通过该接口可以获得当前的所有文章
@@ -17,25 +19,37 @@ import (
 // @Accept application/json
 // @Produce application/json
 // @Param Authorization header string true "Bearer token(jwt)"
+// @Param p query uint false "page"
+// @Param s query uint false "size"
+// @Param c query string false "class"
+// @Param t query string false "tag"
+// @Param n query string false "name"
+// @Param st query string false "status"
+// @Param pr query string false "privilege"
 // @Security ApiKeyAuth
 // @Success 200 {object} ResponseData
 // @Router /articles [get]
 func GetAllArticleHandler(ctx *gin.Context) {
-	aticles, err := logic.GetAllArticle()
-
-	if errors.Is(err, logic.ErrArticleNotExisted) {
-		zap.L().Debug("查询的文章不存在", zap.Error(err))
-		ResponseError(ctx, CodeArticleNotExisted)
+	// 不传递任何参数则代表获取所有
+	param := new(models.ArticleWithPageParams)
+	if err := ctx.ShouldBindQuery(&param); err != nil {
+		zap.L().Debug("获取分页文章参数错误", zap.Error(err))
+		ResponseError(ctx, CodeParameterInvalid)
 		return
 	}
 
-	if errors.Is(err, logic.ErrArticleQueryFailed) {
-		zap.L().Debug("数据库查询出错", zap.Error(err))
-		ResponseError(ctx, CodeServerBusy)
+	articles, cur_page, total_page, err := logicArticle.GetAllWithParams(param)
+	if err != nil {
+		zap.L().Debug("获取分页文章参数错误", zap.Error(err))
+		ResponseError(ctx, CodeParameterInvalid)
 		return
 	}
 
-	ResponseSuccess(ctx, aticles)
+	ResponseSuccess(ctx, gin.H{
+		"cur_page":   cur_page,
+		"total_page": total_page,
+		"articles":   articles,
+	})
 }
 
 // GetArticleWithIdHandler 通过文章ID查询文章详细信息
@@ -58,7 +72,7 @@ func GetArticleWithIdHandler(ctx *gin.Context) {
 	}
 
 	// 调用逻辑层方法
-	article, err := logic.GetArticleById(atcId)
+	article, err := logicArticle.GetArticleById(atcId)
 	if errors.Is(err, logic.ErrArticleNotExisted) {
 		zap.L().Debug("查询的文章不存在", zap.Error(err))
 		ResponseError(ctx, CodeArticleNotExisted)
@@ -73,7 +87,7 @@ func GetArticleWithIdHandler(ctx *gin.Context) {
 
 	// 更新文章的访问量 - 如果未登录进行访问则代表是客户端访问，admin访问不更新
 	if uid, _ := getCurrentUserId(ctx); uid == -1 {
-		_ = logic.UpdateArticleVisitCount(atcId, article.VisitCount+1)
+		_ = logicArticle.UpdateArticleVisitCount(atcId, article.VisitCount+1)
 	}
 
 	ResponseSuccess(ctx, article)
@@ -144,7 +158,7 @@ func CreateArticleHandler(ctx *gin.Context) {
 	}
 
 	// 调用logic层的方法创建文章
-	if err := logic.CreateNewArticle(article, newAtcParams.TagIdList); err != nil {
+	if err := logicArticle.CreateNewArticle(article, newAtcParams.TagIdList); err != nil {
 		zap.L().Error("创建文章失败", zap.Error(err))
 		if errors.Is(err, logic.ErrArticleNameExisted) {
 			ResponseError(ctx, CodeArticleTitleExisted)
@@ -175,7 +189,7 @@ func DeleteArticleHandler(ctx *gin.Context) {
 		return
 	}
 
-	err = logic.DeleteArticleById(atcId)
+	err = logicArticle.DeleteArticleById(atcId)
 	if err != nil {
 		zap.L().Error("删除文章失败", zap.Error(err))
 		ResponseError(ctx, CodeServerBusy)
@@ -202,7 +216,7 @@ func DeleteMultiArticleHandler(ctx *gin.Context) {
 		ResponseError(ctx, CodeParameterInvalid)
 		return
 	}
-	if err := logic.DeleteMultiArticleById(param.Ids); err != nil {
+	if err := logicArticle.DeleteMultiArticleById(param.Ids); err != nil {
 		zap.L().Debug("删除文章失败", zap.Error(err))
 		ResponseError(ctx, CodeServerBusy)
 		return
@@ -229,7 +243,7 @@ func UpdateArticleStatusHandler(ctx *gin.Context) {
 		return
 	}
 
-	if err := logic.UpdateArticleStatusById(param.Ids, param.DelFalg); err != nil {
+	if err := logicArticle.UpdateArticleStatusById(param.Ids, param.DelFalg); err != nil {
 		zap.L().Debug("软删除文章失败", zap.Error(err))
 		ResponseError(ctx, CodeServerBusy)
 		return
@@ -276,7 +290,7 @@ func UpdateArticleHandler(ctx *gin.Context) {
 	}
 
 	// 调用logic层的方法更新文章
-	if err := logic.UpdateArticle(updateAtcParams.ArticleId, article, updateAtcParams.TagIdList); err != nil {
+	if err := logicArticle.UpdateArticle(updateAtcParams.ArticleId, article, updateAtcParams.TagIdList); err != nil {
 		zap.L().Debug("更新文章失败", zap.Error(err))
 		if errors.Is(err, logic.ErrArticleNameExisted) {
 			ResponseError(ctx, CodeArticleTitleExisted)

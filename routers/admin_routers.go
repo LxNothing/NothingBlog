@@ -26,8 +26,11 @@ func AdminSetUp(basePath string, eng *gin.Engine) {
 	articleRouter := eng.Group(basePath)
 	{
 		//articleRouter.Use(middleware.JwtAuthorization())
-		// 获取所有文章
+		// 根据特定的参数分页获取文章 - 仅包含文章的大致信息，不包含文本的具体内容
+		// /api/v1/articles?p=xx&s=xx&c=xx&t=xx&n=xx&st=xx&pr=&
+		// p-page, s-size, c-class, t-tag, n-name(文章名称,模糊搜索), st-status, pr-Privilege
 		articleRouter.GET("/articles", controller.GetAllArticleHandler)
+
 		// 根据文章ID获取文章
 		articleRouter.GET("/article/:id", controller.GetArticleWithIdHandler)
 		// 添加新的文章
@@ -87,8 +90,15 @@ func AdminSetUp(basePath string, eng *gin.Engine) {
 	}
 
 	// 评论相关路由
-	// commentRouter := eng.Group(basePath)
-	// {
-
-	// }
+	commentRouter := eng.Group(basePath)
+	{
+		commentRouter.GET("/comments", controller.GetCommentWithPageHandler) // 按页获取评论
+		commentRouter.POST("/comment", controller.CreateCommentHandler)      // 创建新的评论
+		commentRouter.PUT("/comment/vote")                                   // 评论投票 - 即支持 或者 不支持
+		//以下的接口需要进行JWT认证
+		//commentRouter.Use(middleware.JwtAuthorization())
+		commentRouter.PUT("/comment/state", controller.UpdateCommentStateHandler) // 评论审核
+		commentRouter.DELETE("/comment/:id", controller.DeleteCommentById)        // 根据评论ID删除评论
+		commentRouter.DELETE("/comments", controller.DeleteCommentsByIds)         // 根据评论ID删除评论
+	}
 }

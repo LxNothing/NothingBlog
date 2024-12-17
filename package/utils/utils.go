@@ -14,9 +14,9 @@ import (
 const secret = "xl_ngblog" // md5加密时使用的密钥
 
 // GetTotalPage - 根据传入的每页显示条数，总条数，计算总的页数
-func GetTotalPage(pagesize, total int64) int64 {
-	total_page := total / int64(pagesize)
-	if total%int64(pagesize) != 0 {
+func GetTotalPage(pagesize, total int) int {
+	total_page := total / pagesize
+	if total%pagesize != 0 {
 		total_page++
 	}
 	return total_page
@@ -54,3 +54,25 @@ func GetFileTypeAndExtention(file multipart.File) (string, string, error) {
 
 	return fileType, extension[0], nil
 }
+
+// func GetVaildPageAndSize(page *int, size *int, totalPage int) {
+// 	if *page < 1 {
+// 		*page = 1
+// 	}
+
+// 	if totalPage != -1 && *page > totalPage {
+// 		*page = totalPage
+// 	}
+
+// 	if *size < 1 {
+// 		*size = int(settings.Confg.SystemConfig.PageSize)
+// 	}
+// }
+
+// func CheckPageAndSize(page, size uint) bool {
+// 	// 客户端设置的页尺寸不能大于配置中的页尺寸
+// 	if size > uint(settings.Confg.PageSize) {
+// 		return false
+// 	}
+// 	return true
+// }

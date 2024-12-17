@@ -11,13 +11,13 @@ app:
 
 # 博客系统的默认设置
 system:
-  page_size: 1 # 每页默认的显示文章条数
+  page_size: 20 # 每页默认的显示文章条数
   upload_model: "local" # local or remote 文件上传的保存位置，本地或者云存储
   visit_path : "static/upload"
   upload_path: "./static/upload" # 上传的文件存储路径 upload_model=loacl时使用 ./相对main.go而言
   #default_rc_path : "static/default"
   default_atc_img: "static/default/atc_img.jpeg" # 文章默认的缩略图
-
+  
 auth:
   code_num: 1024 # 验证码个数
   verify_expired: 5 # 验证码的过期时间，单位：分钟

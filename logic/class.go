@@ -10,21 +10,37 @@ import (
 	"go.uber.org/zap"
 )
 
+type LogicClass struct {
+}
+
 var (
 	ErrDeleteClassByIds = errors.New("该类别中存在文章")
 	ErrQueryDatabase    = errors.New("查询数据库出错")
 )
 
-func CreateNewClass(cls *models.Class) (int64, error) {
+var daoClass mysql.DaoClass
+
+// CreateNewClass 创建新的类别，并返回类别的名称和ID
+func (lc LogicClass) CreateNewClass(cls *models.Class) (*models.ClassBriefReturn, error) {
 	cls.ClassId = snowflake.GetNextId().Int64()
 	cls.CreatedAt = time.Now()
 	cls.UpdatedAt = cls.CreatedAt
 
-	return cls.ClassId, mysql.InsertNewClass(cls)
+	if err := daoClass.InsertNewClass(cls); err != nil {
+		zap.L().Debug("插入新的类别到数据库失败", zap.Error(err))
+		return nil, err
+	}
+
+	new_class := &models.ClassBriefReturn{
+		ClassId:  cls.ClassId,
+		Name:     cls.Name,
+		AtcCount: 0,
+	}
+	return new_class, nil
 }
 
-func GetClassById(id int64) (*models.ResponseClassDetail, error) {
-	cls, err := mysql.QueryClassesById(id)
+func (lc LogicClass) GetClassById(id int64) (*models.ClassEntireReturn, error) {
+	cls, err := daoClass.QueryClassesById(id)
 
 	if cls == nil {
 		if err != nil {
@@ -32,22 +48,12 @@ func GetClassById(id int64) (*models.ResponseClassDetail, error) {
 			return nil, ErrArticleQueryFailed
 		}
 	}
-
-	res := &models.ResponseClassDetail{
-		ResponseClassBrief: models.ResponseClassBrief{
-			ClassId:  cls.ClassId,
-			AtcCount: cls.AtcCount,
-			Name:     cls.Name,
-		},
-		Desc:      cls.Desc,
-		CreatedAt: cls.CreatedAt,
-		UpdatedAt: cls.UpdatedAt,
-	}
+	res := cls.BindToEntireClass()
 	return res, nil
 }
 
-func GetClassByName(name string) (*models.Class, error) {
-	cls, err := mysql.QueryClassesByName(name)
+func (lc LogicClass) GetClassByName(name string) (*models.Class, error) {
+	cls, err := daoClass.QueryClassesByName(name)
 
 	if cls == nil {
 		if err != nil {
@@ -58,8 +64,8 @@ func GetClassByName(name string) (*models.Class, error) {
 	return cls, nil
 }
 
-func GetAllClasses() ([]models.ResponseClassBrief, error) {
-	classes, err := mysql.QueryAllClasses()
+func (lc LogicClass) GetAllClasses() ([]models.ClassBriefReturn, error) {
+	classes, err := daoClass.QueryAllClasses()
 
 	if classes == nil {
 		if err != nil {
@@ -68,22 +74,18 @@ func GetAllClasses() ([]models.ResponseClassBrief, error) {
 		}
 	}
 
-	res := make([]models.ResponseClassBrief, len(classes))
+	res := make([]models.ClassBriefReturn, len(classes))
 	for idx, v := range classes {
-		res[idx] = models.ResponseClassBrief{
-			ClassId:  v.ClassId,
-			Name:     v.Name,
-			AtcCount: v.AtcCount,
-		}
+		res[idx] = *v.BindToBriefClass()
 	}
 
 	return res, nil
 }
 
 // DeleteOneClassById 根据类别ID删除class
-func DeleteOneClassById(id int64) error {
+func (lc LogicClass) DeleteOneClassById(id int64) error {
 	// 查询该类别下是否包含文章 查询出错或者存在文章，不允许删除，返回false
-	num, err := mysql.QueryArticleNumberWithClass(id)
+	num, err := articleDb.QueryArticleNumberWithClass(id)
 	if err != nil {
 		return ErrQueryDatabase
 	}
@@ -92,19 +94,19 @@ func DeleteOneClassById(id int64) error {
 	if num != 0 {
 		return ErrDeleteClassByIds
 	}
-	if err := mysql.DeleteClassById(id); err != nil {
+	if err := daoClass.DeleteClassById(id); err != nil {
 		return ErrQueryDatabase
 	}
 	return nil
 }
 
 // DeleteMultiClassById  返回没有被删除的id列表
-func DeleteMultiClassById(ids []int64) ([]int64, error) {
+func (lc LogicClass) DeleteMultiClassById(ids []int64) ([]int64, error) {
 	delIds := make([]int64, 0)
 	retIds := make([]int64, 0)
 	// 先查找不包含文章的class
 	for _, id := range ids {
-		num, err := mysql.QueryArticleNumberWithClass(id)
+		num, err := articleDb.QueryArticleNumberWithClass(id)
 		if err != nil {
 			zap.L().Debug("查询数据库出错", zap.Error(err))
 			continue
@@ -119,12 +121,12 @@ func DeleteMultiClassById(ids []int64) ([]int64, error) {
 	if len(delIds) == 0 {
 		return ids, ErrDeleteClassByIds
 	}
-	if err := mysql.DeleteClassByIds(delIds); err != nil {
+	if err := daoClass.DeleteClassByIds(delIds); err != nil {
 		return ids, ErrQueryDatabase
 	}
 	return retIds, nil
 }
 
-func UpdateClass(class *models.Class) error {
-	return mysql.UpdateClassById(class)
+func (lc LogicClass) UpdateClass(class *models.Class) error {
+	return daoClass.UpdateClassById(class)
 }

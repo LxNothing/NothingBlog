@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"NothingBlog/logic"
 	"NothingBlog/models"
 	"NothingBlog/settings"
 	"strconv"
@@ -23,25 +22,31 @@ func GetIndexHandler(ctx *gin.Context) {
 			return
 		}
 	}
-	page_size := int(settings.Confg.PageSize)
-	atc, total, err := logic.GetArticleWithPage(int(page), page_size, models.StatusDraft, models.PrivilegePrivte, 0)
+	// page_size := int(settings.Confg.PageSize)
+	// stus, _ := models.StatusStringToNumber(models.Drift)
+	// priv, _ := models.PrivilegeStringToNumber(models.Private)
+	// atc, total, err := logicArticle.GetArticleWithPage(int(page), page_size, stus, priv, 0)
 
+	param := &models.ArticleWithPageParams{
+		Keyword:   "",
+		Privilege: models.Public,
+		Status:    models.Commit,
+		Page:      uint(page),
+		Size:      uint(settings.Confg.PageSize),
+		Tag:       "",
+		Class:     "",
+	}
+
+	atc, cur_page, total_page, err := logicArticle.GetAllWithParams(param)
 	if err != nil {
 		zap.L().Debug("分页查询文章出错", zap.Error(err))
 		ResponseError(ctx, CodeServerBusy)
 		return
 	}
-
-	// 计算总的页数
-	total_page := total / int64(page_size)
-	if total%int64(page_size) != 0 {
-		total_page++
-	}
-
 	// 按页返回文章
 	ResponseSuccess(ctx, gin.H{
 		"article":    atc,
-		"cur_page":   page,       // 当前返回的页数
+		"cur_page":   cur_page,   // 当前返回的页数
 		"total_page": total_page, // 总共有多少页
 	})
 }

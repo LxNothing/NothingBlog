@@ -31,5 +31,8 @@ func ClientSetUp(basePath string, eng *gin.Engine) {
 		// router.GET("/classes/:id/atc/:page", nil)
 
 		router.GET("/category", controller.GetAllClassClientHandler) // 等价于 /category?class=all&tag=all"
+
+		// "/comment?atcid=xxxxxxx"
+		router.GET("/comment", controller.GetCommentForClientHandler)
 	}
 }

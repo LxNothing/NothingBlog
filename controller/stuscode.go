@@ -35,6 +35,9 @@ const (
 	// class
 	CodeClassNotExisted
 	CodeClassNameExisted
+
+	// comment
+	CodeCreateCommentFailed
 )
 
 var codeMsgMap = map[ResponseCodeType]string{

@@ -14,13 +14,16 @@ var (
 	ErrTagOtherReason  = errors.New("其他原因的错误")
 )
 
+type DaoTag struct {
+}
+
 // 向数据库中插入数据
-func InsertNewTag(tag *models.Tag) error {
+func (dt DaoTag) InsertNewTag(tag *models.Tag) error {
 	return Db.Create(tag).Error
 }
 
 // 查询所有的tag，以及所有的信息
-func QueryAllTags() ([]models.Tag, error) {
+func (dt DaoTag) QueryAllTags() ([]models.Tag, error) {
 	var tags []models.Tag
 	if err := Db.Preload("ArticleList").Find(&tags).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -31,7 +34,7 @@ func QueryAllTags() ([]models.Tag, error) {
 	return tags, nil
 }
 
-func QueryTagById(tag *models.Tag) error {
+func (dt DaoTag) QueryTagById(tag *models.Tag) error {
 	err := Db.Where("tag_id=?", tag.TagId).Take(tag).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return ErrTagInfoNotFound
@@ -39,7 +42,7 @@ func QueryTagById(tag *models.Tag) error {
 	return nil
 }
 
-func QueryTagByName(tag *models.Tag) error {
+func (dt DaoTag) QueryTagByName(tag *models.Tag) error {
 	err := Db.Where("name=?", tag.Name).Take(tag).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return ErrTagInfoNotFound
@@ -52,14 +55,27 @@ func QueryTagByName(tag *models.Tag) error {
 	return nil
 }
 
+func (dt DaoTag) QueryTagIdsByName(name []string) ([]int64, error) {
+	var res []int64
+	err := Db.Model(&models.Tag{}).Select("tag_id").Where("name in (?)", name).Take(&res).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrTagInfoNotFound
+	}
+
+	if err != nil {
+		return nil, ErrTagOtherReason
+	}
+	return res, nil
+}
+
 // 根据ID更新tag信息
-func UpdateTagById(tag *models.Tag) (err error) {
+func (dt DaoTag) UpdateTagById(tag *models.Tag) (err error) {
 	// 使用这种方式预防gorm不更新0值
 	return Db.Select("updated_at", "name", "desc").Where("tag_id = ?", tag.TagId).Updates(tag).Error
 }
 
 // 根据种类名称，获取该种类名称下所有的tag信息
-func QuerytTagByClassId(clsId int64) (map[string]models.Tag, error) {
+func (dt DaoTag) QuerytTagByClassId(clsId int64) (map[string]models.Tag, error) {
 	var atcs []models.Article
 	err := Db.Debug().Model(&models.Article{}).Preload("TagList").Where("class_id = ?", clsId).Find(&atcs).Error
 	//query := "select atcile_id from aticles where class_name = ?"
@@ -119,7 +135,7 @@ func QuerytTagByClassId(clsId int64) (map[string]models.Tag, error) {
 // }
 
 // 删除多个tag，需要指定tag的id
-func DeleteTagByIds(ids []int64) (err error) {
+func (dt DaoTag) DeleteTagByIds(ids []int64) (err error) {
 	tx := Db.Begin()
 	defer func() {
 		if r := recover(); r != nil {

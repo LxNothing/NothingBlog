@@ -195,6 +195,48 @@
                         "name": "Authorization",
                         "in": "header",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page",
+                        "name": "p",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "s",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "class",
+                        "name": "c",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "tag",
+                        "name": "t",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "name",
+                        "name": "n",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "status",
+                        "name": "st",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "privilege",
+                        "name": "pr",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -678,6 +720,199 @@
                 }
             }
         },
+        "/comment": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以创建评论",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "评论相关接口"
+                ],
+                "summary": "创建评论Comment的接口",
+                "parameters": [
+                    {
+                        "description": "创建评论的参数",
+                        "name": "object",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CommentCreateFormParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code=1000表示成功其余失败",
+                        "schema": {
+                            "$ref": "#/definitions/controller._ResponseNoDataArea"
+                        }
+                    }
+                }
+            }
+        },
+        "/comment/:id": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以删除单条评论",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "评论相关接口"
+                ],
+                "summary": "删除单条评论Comment的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "删除的评论的ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code=1000表示成功其余失败",
+                        "schema": {
+                            "$ref": "#/definitions/controller._ResponseNoDataArea"
+                        }
+                    }
+                }
+            }
+        },
+        "/comments": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以分页获取评论",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "评论相关接口"
+                ],
+                "summary": "分页获取评论的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "关键字",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "评论类型 1-文章",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "对应的文章id",
+                        "name": "atc_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "状态: 1-审核中 2-审核通过 3-审核未通过",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "页号",
+                        "name": "page_idx",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "每页大小",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code=1000表示成功其余失败",
+                        "schema": {
+                            "$ref": "#/definitions/controller._ResponseNoDataArea"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "通过该接口可以修改评论的状态",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "评论相关接口"
+                ],
+                "summary": "修改指定评论的状态的接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token(jwt)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "删除的评论的ID",
+                        "name": "object",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CommentDeleteFormParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "code=1000表示成功其余失败",
+                        "schema": {
+                            "$ref": "#/definitions/controller._ResponseNoDataArea"
+                        }
+                    }
+                }
+            }
+        },
         "/tag": {
             "put": {
                 "security": [
@@ -943,7 +1178,8 @@
                 1014,
                 1015,
                 1016,
-                1017
+                1017,
+                1018
             ],
             "x-enum-varnames": [
                 "CodeSuccess",
@@ -963,7 +1199,8 @@
                 "CodeTagExisted",
                 "CodeTagNotExisted",
                 "CodeClassNotExisted",
-                "CodeClassNameExisted"
+                "CodeClassNameExisted",
+                "CodeCreateCommentFailed"
             ]
         },
         "controller.ResponseData": {
@@ -1099,6 +1336,53 @@
                 }
             }
         },
+        "models.CommentCreateFormParams": {
+            "type": "object",
+            "properties": {
+                "article_id": {
+                    "description": "被评论的文章ID",
+                    "type": "string",
+                    "example": "0"
+                },
+                "content": {
+                    "description": "评论内容",
+                    "type": "string"
+                },
+                "email": {
+                    "description": "评论人的邮箱 - 不强制要求",
+                    "type": "string"
+                },
+                "parent_comment_id": {
+                    "description": "RootCommentId   uint   `json:\"root_comment_id,string\"`   // 根评论的ID",
+                    "type": "string",
+                    "example": "0"
+                },
+                "status": {
+                    "description": "评论状态：0-审核中 1-审核通过 2-审核未通过",
+                    "type": "integer"
+                },
+                "type": {
+                    "description": "评论种类 1- 表示文章评论",
+                    "type": "integer"
+                },
+                "user_name": {
+                    "description": "评论人名字 - 强制要求",
+                    "type": "string"
+                }
+            }
+        },
+        "models.CommentDeleteFormParams": {
+            "type": "object",
+            "properties": {
+                "ids": {
+                    "description": "id列表",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
         "models.DeleteMultiArticleParams": {
             "type": "object",
             "required": [
@@ -1219,11 +1503,7 @@
                 },
                 "status": {
                     "description": "文章状态 0-草稿 1-发布 2-删除",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/models.StatusType"
-                        }
-                    ]
+                    "type": "integer"
                 },
                 "summary": {
                     "description": "文章的摘要信息",
@@ -1249,19 +1529,16 @@
         "models.PrivilegeType": {
             "type": "integer",
             "enum": [
-                0,
                 1,
                 2
             ],
             "x-enum-comments": {
-                "PrivilegeAll": "所有权限",
-                "PrivilegePrivte": "1- 当前文章私有，客户端不可见",
-                "PrivilegePublic": "0 - 当前文章是公开的，客户端可见（默认）"
+                "PrivilegePrivte": "2- 当前文章私有，客户端不可见",
+                "PrivilegePublic": "1 - 当前文章是公开的，客户端可见（默认）"
             },
             "x-enum-varnames": [
                 "PrivilegePublic",
-                "PrivilegePrivte",
-                "PrivilegeAll"
+                "PrivilegePrivte"
             ]
         },
         "models.ResetPasswordParams": {
@@ -1431,27 +1708,6 @@
                 }
             }
         },
-        "models.StatusType": {
-            "type": "integer",
-            "enum": [
-                0,
-                1,
-                2,
-                3
-            ],
-            "x-enum-comments": {
-                "StatusAll": "所有状态",
-                "StatusCommit": "1 - 已经提交，外部可以访问（同时Privilege要为公开才可以）",
-                "StatusDelete": "2 - 预删除，处于这种状态外部不可见，但是数据仍然在数据库（类似垃圾回收站）",
-                "StatusDraft": "0 - 草稿"
-            },
-            "x-enum-varnames": [
-                "StatusDraft",
-                "StatusCommit",
-                "StatusDelete",
-                "StatusAll"
-            ]
-        },
         "models.TagCreateFormParams": {
             "type": "object",
             "required": [
@@ -1519,11 +1775,7 @@
                 },
                 "status": {
                     "description": "文章状态 0-草稿 1-发布 2-删除",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/models.StatusType"
-                        }
-                    ]
+                    "type": "integer"
                 },
                 "summary": {
                     "description": "文章的摘要信息",
